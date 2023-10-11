@@ -1,0 +1,18 @@
+
+
+services:
+  service1:
+    image: "err/backend-service1"
+    build: 
+      dockerfile: "./service1-dockerfile"
+      context: "./service"
+    ports: 
+      - "1122:1122"
+  service2:
+    image: "err/backend-service2"
+    build: 
+      dockerfile: "./service2-dockerfile"
+      context: "./service"
+    ports: 
+      - "8080:8080"
+ 
