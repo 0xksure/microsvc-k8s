@@ -3,6 +3,7 @@ kind: Service
 metadata:
   name: microservice-lb
   labels:
+    project: microservice
     app: microservice-lb
 spec:
   type: LoadBalancer

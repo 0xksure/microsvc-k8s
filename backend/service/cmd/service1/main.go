@@ -15,7 +15,7 @@ func main() {
 
 	rpcServer := rpc.NewServer()
 	message := new(shared.MessageServer)
-	rpcServer.RegisterName("getMessage", message)
+	rpcServer.Register(message)
 	rpcServer.HandleHTTP("/", "/debug")
 
 	listener, err := net.Listen("tcp", ":1122")

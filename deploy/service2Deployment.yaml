@@ -3,6 +3,7 @@ kind: Deployment
 metadata:
   name: microservice2
   labels: 
+    project: microservice
     app: microservice2
 spec:
   replicas: 3

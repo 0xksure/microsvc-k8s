@@ -16,7 +16,7 @@ type Service2 struct {
 
 func (s *Service2) GetMessage() (*shared.Reply, error) {
 	reply := new(shared.Reply)
-	err := s.client.Call("MessageServer.getMessage", &shared.Args{}, reply)
+	err := s.client.Call("MessageServer.GetMessage", &shared.Args{}, reply)
 	if err != nil {
 		return reply, err
 	}
@@ -29,7 +29,7 @@ func main() {
 	logger := log.Default()
 	logger.Println("Starting service2...")
 
-	client, err := rpc.DialHTTP("tcp", "http://micro1-service:1122")
+	client, err := rpc.DialHTTP("tcp", "micro1-service:1122")
 	if err != nil {
 		logger.Fatal("dialing:", err)
 	}

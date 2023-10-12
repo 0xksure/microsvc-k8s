@@ -3,6 +3,7 @@ kind: Service
 metadata:
   name: micro1-service
   labels:
+    project: microservice
     app: micro1-service
 spec:
   ports:

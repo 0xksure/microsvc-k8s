@@ -3,6 +3,7 @@ kind: Deployment
 metadata:
   name: microservice1
   labels: 
+    project: microservice
     app: microservice1
 spec:
   replicas: 3
@@ -24,5 +25,6 @@ spec:
             cpu: "200m"
         ports:
         - containerPort: 1122
+          name: svc1-port
      
 
