@@ -16,5 +16,5 @@ Everything is orchestrated using kubernetes and exposed through a load balancer 
 
 # TODO
 [ ] make service 1 make useful calculations
-[ ] stand up a db to store state
+[ ] stand up a db to store state. Use postgresql rather than scylla. 
 [ ] build and expose a frontend server or just a static web server 

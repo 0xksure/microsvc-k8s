@@ -1,0 +1,128 @@
+
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: local-storage
+provisioner: kubernetes.io/no-provisioner
+reclaimPolicy: Retain
+volumeBindingMode: WaitForFirstConsumer
+
+---
+
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: scylladb-pv
+spec:
+  capacity:
+    storage: 1Gi
+  volumeMode: Filesystem
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: local-storage 
+  hostPath:
+    path: /tmp/var/lib/scylla
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+       - matchExpressions:
+          - key: kubernetes.io/hostname
+            operator: In
+            values:
+            - docker-desktop 
+
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: scylladb-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: local-storage
+  resources:
+    requests:
+      storage: 1Gi  
+
+---
+
+apiVersion: apps/v1
+kind: StatefulSet
+metadata: 
+  name: scylladb
+  labels:
+    project: microservice
+    app: scylladb
+spec:
+  serviceName: scylladb
+  replicas: 1
+  selector:
+    matchLabels:
+      app: scylladb
+  template:
+    metadata:
+      labels:
+        app: scylladb
+    spec:
+      containers:
+      - name: scylladb
+        image: scylladb/scylla
+        resources:
+          limits:
+            memory: "128Mi"
+            cpu: "200m"
+        ports:
+        - containerPort: 7199
+          name: sdb-jmx-port
+        - containerPort: 10000
+          name: sdb-api-port
+        volumeMounts:
+        - name: scylladb-data
+          mountPath: /var/lib/scylla
+      volumes:
+        - name: scylladb-data
+          persistentVolumeClaim:
+            claimName: scylladb-pvc
+
+--- 
+
+## Set up clusterIP 
+apiVersion: v1
+kind: Service
+metadata:
+  name: scylladb
+  labels:
+    app: scylladb
+    project: microservice
+spec:
+  ports:
+    - name: scylla1-port
+      port: 10000
+      targetPort: sdb-api-port
+  selector:
+    app: scylladb
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: scylladb-proxy
+  labels:
+    app: scylladb
+    project: microservice
+spec:
+  type: NodePort
+  selector: 
+    app: scylladb
+  ports:
+    - name: sdb-proxy-port  
+      targetPort: sdb-api-port
+      nodePort: 30000
+      port: 10000
+    - name: sdb-jmx-proxy 
+      targetPort: sdb-jmx-port
+      nodePort: 30012
+      port: 7199
+       

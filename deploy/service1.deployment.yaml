@@ -27,4 +27,21 @@ spec:
         - containerPort: 1122
           name: svc1-port
      
+---
 
+## Service for service 1
+apiVersion: v1
+kind: Service
+metadata:
+  name: micro1-service
+  labels:
+    project: microservice
+    app: micro1-service
+spec:
+  ports:
+  - name: service1-port-ext
+    port: 1122
+    protocol: TCP
+    targetPort: svc1-port
+  selector:
+    app: microservice1

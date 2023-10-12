@@ -1,0 +1,67 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: microservice2
+  labels: 
+    project: microservice
+    app: microservice2
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: microservice2
+  template:
+    metadata:
+      labels:
+        app: microservice2
+    spec:
+      containers:
+      - name: service2
+        image: err/backend-service2
+        imagePullPolicy: Never
+        resources:
+          limits:
+            memory: "128Mi"
+            cpu: "200m"
+        ports:
+        - containerPort: 8080
+          name: svc2-port
+     
+---
+
+## Service 
+apiVersion: v1
+kind: Service
+metadata:
+  name: micro2-service
+  labels:
+    project: microservice
+    app: micro2-service
+spec:
+  ports:
+  - name: service2-port-ext
+    port: 80
+    protocol: TCP
+    targetPort: svc2-port
+  selector:
+    app: microservice2
+
+---
+
+## Load Balancer
+apiVersion: v1
+kind: Service
+metadata:
+  name: microservice-lb
+  labels:
+    project: microservice
+    app: microservice-lb
+spec:
+  type: LoadBalancer
+  selector: 
+    app: microservice2
+  ports:
+    - name: "80"
+      port: 80
+      targetPort: 8080
+      protocol: TCP
