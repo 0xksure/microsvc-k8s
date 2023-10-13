@@ -28,11 +28,13 @@ func (s *Service2) GetMessage() (*shared.Reply, error) {
 func main() {
 	logger := log.Default()
 	logger.Println("Starting service2...")
+	logger.Println("Dial...")
 
 	client, err := rpc.DialHTTP("tcp", "micro1-service:1122")
 	if err != nil {
 		logger.Fatal("dialing:", err)
 	}
+	log.Print("connected to microservice1 for requests")
 	svc2 := &Service2{
 		client: client,
 	}
@@ -63,5 +65,6 @@ func main() {
 		ReadTimeout:  15 * time.Second,
 	}
 
+	log.Print("waiting for requests")
 	log.Fatal(srv.ListenAndServe())
 }

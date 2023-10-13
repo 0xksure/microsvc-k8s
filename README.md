@@ -2,6 +2,14 @@
 
 The app sets out to demonstrate how to run microservices in a kubernetes cluster.  
 
+## Setup
+
+### Install just
+> https://github.com/casey/just
+
+### Install migrate 
+https://github.com/golang-migrate/migrate/tree/master/cmd/migrate
+
 
 # Services 
 

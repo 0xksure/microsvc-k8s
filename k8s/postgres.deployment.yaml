@@ -12,7 +12,7 @@ volumeBindingMode: WaitForFirstConsumer
 apiVersion: v1
 kind: PersistentVolume
 metadata:
-  name: scylladb-pv
+  name: pql-pv
 spec:
   capacity:
     storage: 1Gi
@@ -21,7 +21,7 @@ spec:
     - ReadWriteOnce
   storageClassName: local-storage 
   hostPath:
-    path: /tmp/var/lib/scylla
+    path: /tmp//var/lib/postgresql
   nodeAffinity:
     required:
       nodeSelectorTerms:
@@ -36,7 +36,7 @@ spec:
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: scylladb-pvc
+  name: pql-pvc
 spec:
   accessModes:
     - ReadWriteOnce
@@ -50,40 +50,49 @@ spec:
 apiVersion: apps/v1
 kind: StatefulSet
 metadata: 
-  name: scylladb
+  name: postgres
   labels:
     project: microservice
-    app: scylladb
+    app: postgres
 spec:
-  serviceName: scylladb
+  serviceName: postgres
   replicas: 1
   selector:
     matchLabels:
-      app: scylladb
+      app: postgres
   template:
     metadata:
       labels:
-        app: scylladb
+        app: postgres
     spec:
       containers:
-      - name: scylladb
-        image: scylladb/scylla
+      - name: postgres
+        image: postgres
         resources:
           limits:
             memory: "128Mi"
             cpu: "200m"
         ports:
-        - containerPort: 7199
-          name: sdb-jmx-port
-        - containerPort: 10000
-          name: sdb-api-port
+        - containerPort: 5432
+          name: pql-port
         volumeMounts:
-        - name: scylladb-data
-          mountPath: /var/lib/scylla
+        - name: pql-data
+          mountPath: /var/lib/postgresql
+        env:
+          - name: POSTGRES_PASSWORD
+            valueFrom:
+              configMapKeyRef:
+                name: global-config
+                key: POSTGRES_PASSWORD
+          - name: POSTGRES_USER
+            valueFrom:
+              configMapKeyRef:
+                name: global-config
+                key: POSTGRES_USER
       volumes:
-        - name: scylladb-data
+        - name: pql-data
           persistentVolumeClaim:
-            claimName: scylladb-pvc
+            claimName: pql-pvc
 
 --- 
 
@@ -91,38 +100,36 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: scylladb
+  name: postgres
   labels:
-    app: scylladb
+    app: postgres
     project: microservice
 spec:
   ports:
-    - name: scylla1-port
-      port: 10000
-      targetPort: sdb-api-port
+    - name: postgres-port
+      port: 5432
+      targetPort: pql-port
   selector:
-    app: scylladb
+    app: postgres
 
 ---
 
-apiVersion: v1
-kind: Service
-metadata:
-  name: scylladb-proxy
-  labels:
-    app: scylladb
-    project: microservice
-spec:
-  type: NodePort
-  selector: 
-    app: scylladb
-  ports:
-    - name: sdb-proxy-port  
-      targetPort: sdb-api-port
-      nodePort: 30000
-      port: 10000
-    - name: sdb-jmx-proxy 
-      targetPort: sdb-jmx-port
-      nodePort: 30012
-      port: 7199
+## Expose psql through NodePort
+
+# apiVersion: v1
+# kind: Service
+# metadata:
+#   name: postgres-proxy
+#   labels:
+#     app: postgres
+#     project: microservice
+# spec:
+#   type: NodePort
+#   selector: 
+#     app: postgres
+#   ports:
+#     - name: pql-proxy-port  
+#       targetPort: pql-port # psql internal service port 
+#       nodePort: 30001 # external port 
+#       port: 5432 # internal port
        

@@ -26,6 +26,23 @@ spec:
         ports:
         - containerPort: 8080
           name: svc2-port
+      initContainers:
+        - name: init-service1
+          image: alpine/curl:latest 
+          command: [
+            "sh", 
+            "-c", 
+            "while true; do
+              IS_UP=$(curl -f -s --connect-timeout 5 micro1-service:8080/health | grep -c OK);
+              if [ $IS_UP -eq 1 ]; then
+                break;
+              else
+                echo 'Waiting for service1 to be up ';
+              fi;
+              sleep 1;
+            done
+            "
+          ]
      
 ---
 

@@ -43,8 +43,37 @@ warn('ℹ️ Open {tiltfile_path} in your favorite editor to get started.'.forma
 #                 # paths change
 #                 run('/src/codegen.sh', trigger=['./app/api'])
 #              ]
-# )
+#)
+# Build Docker image for service 1
+docker_build('err/backend-service1',
+context="./backend/service",
+dockerfile='service1-dockerfile',
+live_update=[
+    run(
+        'CGO_ENABLED=0 GOOS=linux go build -o ./build ./cmd/service1/main.go',
+        trigger=[
+            './backend/service/cmd/service1/*',
+            './backend/service/shared/*'
+        ]
+    )
+]
+)
 
+docker_build('err/backend-service2',
+context="./backend/service",
+dockerfile='service2-dockerfile',
+live_update=[
+    # run(
+    #     'CGO_ENABLED=0 GOOS=linux go build -o ./build ./cmd/service2/main.go',
+    #     trigger=[
+    #         './backend/service/cmd/service2/*',
+    #         './backend/service/shared/*'
+    #     ]
+    # ),
+]
+)
+
+k8s_yaml(['k8s/global.configMap.yaml', 'k8s/postgres.deployment.yaml','k8s/service1.deployment.yaml','k8s/service2.deployment.yaml'])
 
 # Apply Kubernetes manifests
 #   Tilt will build & push any necessary images, re-deploying your
@@ -74,6 +103,23 @@ warn('ℹ️ Open {tiltfile_path} in your favorite editor to get started.'.forma
 #              trigger_mode=TRIGGER_MODE_MANUAL
 # )
 
+local_resource('migrate',
+               cmd='just migrate_up pwd',
+            resource_deps=['postgres']
+   
+)
+k8s_resource('microservice2',resource_deps=['microservice1'],port_forwards=["30004:8080"])
+k8s_resource('microservice1',resource_deps=['postgres'],port_forwards=['30002:1122',"30003:8080"])
+k8s_resource('postgres',
+                port_forwards=['30001:5432'],
+    )
+
+# k8s_resource('microservice2',
+#                 port_forwards=['80:80'],
+#                 auto_init=False,
+#                 trigger_mode=TRIGGER_MODE_MANUAL
+#     )
+
 
 # Run local commands
 #   Local commands can be helpful for one-time tasks like installing
@@ -82,16 +128,7 @@ warn('ℹ️ Open {tiltfile_path} in your favorite editor to get started.'.forma
 #
 #   More info: https://docs.tilt.dev/local_resource.html
 #
-# local_resource('install-helm',
-#                cmd='which helm > /dev/null || brew install helm',
-#                # `cmd_bat`, when present, is used instead of `cmd` on Windows.
-#                cmd_bat=[
-#                    'powershell.exe',
-#                    '-Noninteractive',
-#                    '-Command',
-#                    '& {if (!(Get-Command helm -ErrorAction SilentlyContinue)) {scoop install helm}}'
-#                ]
-# )
+
 
 
 # Extensions are open-source, pre-packaged functions that extend Tilt

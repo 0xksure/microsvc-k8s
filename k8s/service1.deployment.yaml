@@ -26,6 +26,8 @@ spec:
         ports:
         - containerPort: 1122
           name: svc1-port
+        - containerPort: 8080
+          name: svc1-http-port
      
 ---
 
@@ -43,5 +45,9 @@ spec:
     port: 1122
     protocol: TCP
     targetPort: svc1-port
+  - name: service1-http-ext
+    port: 8080
+    protocol: TCP
+    targetPort: svc1-http-port
   selector:
     app: microservice1

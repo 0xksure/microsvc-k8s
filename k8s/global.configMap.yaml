@@ -6,4 +6,5 @@ metadata:
     project: microservice
     app: global-config
 data:
-  ok: "ok"
+  POSTGRES_PASSWORD: "pwd"
+  POSTGRES_USER: "user"
