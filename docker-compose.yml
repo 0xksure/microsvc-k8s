@@ -4,14 +4,21 @@ services:
   service1:
     image: "err/backend-service1"
     build: 
-      dockerfile: "./service1-dockerfile"
+      dockerfile: "./../../service1-dockerfile"
       context: "./backend/service"
     ports: 
       - "1122:1122"
   service2:
     image: "err/backend-service2"
     build: 
-      dockerfile: "./service2-dockerfile"
+      dockerfile: "./../../service2-dockerfile"
+      context: "./backend/service"
+    ports: 
+      - "8080:80"
+  ghapp:
+    image: "err/github-app"
+    build: 
+      dockerfile: "./../../ghapp.dockerfile"
       context: "./backend/service"
     ports: 
       - "8080:8080"

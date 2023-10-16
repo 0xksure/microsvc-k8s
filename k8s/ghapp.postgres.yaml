@@ -1,0 +1,67 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata: 
+  name: ghapp-psql
+  labels:
+    project: microservice
+    app: ghapp-psql
+spec:
+  serviceName: ghapp-psql
+  replicas: 1
+  selector:
+    matchLabels:
+      app: postgres
+  template:
+    metadata:
+      labels:
+        app: postgres
+    spec:
+      containers:
+      - name: postgres
+        image: postgres
+        resources:
+          limits:
+            memory: "128Mi"
+            cpu: "200m"
+        ports:
+        - containerPort: 5432
+          name: pql-port
+        volumeMounts:
+        - name: pql-data
+          mountPath: /var/lib/postgresql
+          subPath: ghapp-psql
+        env:
+          - name: POSTGRES_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: secret-vault
+                key: POSTGRES_PASSWORD
+          - name: POSTGRES_USER
+            valueFrom:
+              configMapKeyRef:
+                name: global-config
+                key: POSTGRES_USER
+      volumes:
+        - name: pql-data
+          persistentVolumeClaim:
+            claimName: pql-pvc
+      
+
+--- 
+
+## Set up clusterIP 
+apiVersion: v1
+kind: Service
+metadata:
+  name: ghapp-psql-svc
+  labels:
+    app: ghapp-psql-svc
+    project: microservice
+spec:
+  ports:
+    - name: postgres-port
+      port: 5432
+      targetPort: pql-port
+  selector:
+    app: ghapp-psql
+

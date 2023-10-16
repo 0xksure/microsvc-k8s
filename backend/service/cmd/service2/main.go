@@ -28,7 +28,6 @@ func (s *Service2) GetMessage() (*shared.Reply, error) {
 func main() {
 	logger := log.Default()
 	logger.Println("Starting service2...")
-	logger.Println("Dial...")
 
 	client, err := rpc.DialHTTP("tcp", "micro1-service:1122")
 	if err != nil {

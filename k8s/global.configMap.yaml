@@ -6,5 +6,7 @@ metadata:
     project: microservice
     app: global-config
 data:
-  POSTGRES_PASSWORD: "pwd"
   POSTGRES_USER: "user"
+  GITHUB_WEB_URL: "https://api.github.com/"
+  GITHUB_V3_API_URL: "https://api.github.com/"
+  GITHUB_V4_API_URL: "https://api.github.com/"

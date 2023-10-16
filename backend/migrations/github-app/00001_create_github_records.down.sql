@@ -1,0 +1,3 @@
+DROP TABLE IF EXISTS bounty;
+DROP TABLE IF EXISTS bounty_creator;
+DROP TABLE IF EXISTS bounty_status;
