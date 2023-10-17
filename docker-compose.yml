@@ -22,4 +22,11 @@ services:
       context: "./backend/service"
     ports: 
       - "8080:8080"
+  frontend:
+    image: "err/frontend"
+    build: 
+      dockerfile: "./../frontend.dockerfile"
+      context: "./frontend"
+    ports: 
+      - "3000:3000"
  

@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"database/sql"
 	"encoding/json"
 	"fmt"
 	"regexp"
@@ -20,12 +19,12 @@ import (
 
 type PRCommentHandler struct {
 	githubapp.ClientCreator
-	preamble string
-	db       *sql.DB
+	preamble  string
+	bountyOrm *BountyORM
 }
 
 func (h *PRCommentHandler) Handles() []string {
-	return []string{"issue_comment"}
+	return []string{"issue_comment", "issues"}
 }
 
 func CreateSigningLink(token, amount string) string {
@@ -39,10 +38,6 @@ func (h *PRCommentHandler) CommentIssue(ctx context.Context, event github.IssueC
 
 	ctx, logger := githubapp.PreparePRContext(ctx, instId, repo, prNum)
 	logger.Info().Msgf("Event action is %s", event.GetAction())
-	if event.GetAction() != "created" {
-		logger.Info().Msg("Issue comment event action already created")
-		return nil
-	}
 
 	client, err := h.NewInstallationClient(instId)
 	if err != nil {
@@ -64,9 +59,25 @@ func (h *PRCommentHandler) CommentIssue(ctx context.Context, event github.IssueC
 		Body: &msg,
 	}
 
+	userId := event.GetComment().GetUser().GetID()
+	userName := event.GetComment().GetUser().GetLogin()
+	issueUrl := event.GetIssue().GetURL()
+	issueId := event.GetIssue().GetID()
+	repoId := repo.GetID()
+	ownerId := repo.GetOwner().GetID()
+
+	// create bounty in db
+	_, err = h.bountyOrm.createBounty(ctx, int(userId), userName, issueUrl, int(issueId), int(repoId), repoName, int(ownerId), "open")
+	if err != nil {
+		logger.Error().Err(err).Msg("Failed to create bounty")
+		return err
+	}
+
+	// send bounty message to github
 	if _, _, err := client.Issues.CreateComment(ctx, repoOwner, repoName, prNum, &prComment); err != nil {
 		logger.Error().Err(err).Msg("Failed to comment on pull request")
 	}
+
 	return nil
 }
 
@@ -102,18 +113,25 @@ func (h *PRCommentHandler) GetBounty(ctx context.Context, event github.IssueComm
 //
 // It will echo the comment back to the PR.
 func (h *PRCommentHandler) Handle(ctx context.Context, eventType, deliveryId string, payload []byte) error {
+	zerolog.Ctx(ctx).Info().Msg("Handling issue comment event")
 	var event github.IssueCommentEvent
 	if err := json.Unmarshal(payload, &event); err != nil {
+		zerolog.Ctx(ctx).Error().Err(err).Msg("Failed to parse the incoming data into an issue comment event")
 		return errors.Wrap(err, "failed to parse the incoming data into an issue comment event")
 	}
 
 	if event.GetAction() == "opened" {
+		zerolog.Ctx(ctx).Info().Msg("Issue comment event action is opened")
 		msg, err := h.GetBounty(ctx, event)
 		if err != nil {
-			zerolog.Ctx(ctx).Info().Msg("No bounty found")
+			zerolog.Ctx(ctx).Err(err).Msg("No bounty found")
 			return nil
 		}
-		h.CommentIssue(ctx, event, msg)
+		err = h.CommentIssue(ctx, event, msg)
+		if err != nil {
+			zerolog.Ctx(ctx).Error().Err(err).Msg("Failed to comment on issue")
+			return err
+		}
 		return nil
 	}
 

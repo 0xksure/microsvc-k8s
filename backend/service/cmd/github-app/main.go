@@ -1,13 +1,14 @@
 package main
 
 import (
-	"database/sql"
+	"context"
 	"fmt"
 	"net/http"
 	"os"
 	"time"
 
 	"github.com/gregjones/httpcache"
+	"github.com/jackc/pgx/v5"
 	"github.com/justinas/alice"
 	_ "github.com/lib/pq"
 	"github.com/palantir/go-githubapp/githubapp"
@@ -52,18 +53,21 @@ func main() {
 	}
 
 	// init postgres connection
-	psqlConnStr := "postgres://user:pwd@ghapp-psql:5432/user?sslmode=disable"
-	db, err := sql.Open("postgres", psqlConnStr)
+	psqlConnStr := "postgres://user:pwd@ghapp-psql-svc:5432/user?sslmode=disable"
+	conn, err := pgx.Connect(context.Background(), psqlConnStr)
 	if err != nil {
 		logger.Print("db open error: ", err)
 		return
 	}
-	defer db.Close()
+	defer conn.Close(context.Background())
 
+	BountyORM := &BountyORM{
+		db: conn,
+	}
 	prCommentHandler := &PRCommentHandler{
 		ClientCreator: cc,
 		preamble:      "Sandblizzard",
-		db:            db,
+		bountyOrm:     BountyORM,
 	}
 
 	webhookHandler := githubapp.NewDefaultEventDispatcher(*ghConfig, prCommentHandler)

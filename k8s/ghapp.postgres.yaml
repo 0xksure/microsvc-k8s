@@ -10,11 +10,11 @@ spec:
   replicas: 1
   selector:
     matchLabels:
-      app: postgres
+      app: ghapp-psql
   template:
     metadata:
       labels:
-        app: postgres
+        app: ghapp-psql
     spec:
       containers:
       - name: postgres
@@ -25,7 +25,7 @@ spec:
             cpu: "200m"
         ports:
         - containerPort: 5432
-          name: pql-port
+          name: ghapp-psql-port
         volumeMounts:
         - name: pql-data
           mountPath: /var/lib/postgresql
@@ -59,9 +59,9 @@ metadata:
     project: microservice
 spec:
   ports:
-    - name: postgres-port
+    - name: ghapp-psql-port
       port: 5432
-      targetPort: pql-port
+      targetPort: ghapp-psql-port
   selector:
     app: ghapp-psql
 

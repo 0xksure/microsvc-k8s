@@ -7,5 +7,9 @@ migrate_up_s1 POSTGRES_PWD:
 migrate_up_ghapp POSTGRES_PWD:
 	migrate -path backend/migrations/github-app -database postgres://{{postgres_user}}:{{POSTGRES_PWD}}@localhost:30006/{{postgres_user}}?sslmode=disable up
 
-migrate_up_ghapp_f POSTGRES_PWD:
-	migrate -path backend/migrations/github-app -database postgres://{{postgres_user}}:{{POSTGRES_PWD}}@localhost:30006/{{postgres_user}}?sslmode=disable force 1
+migrate_down_ghapp POSTGRES_PWD:
+	migrate -path backend/migrations/github-app -database postgres://{{postgres_user}}:{{POSTGRES_PWD}}@localhost:30006/{{postgres_user}}?sslmode=disable down
+
+
+migrate_force_ghapp POSTGRES_PWD VER:
+	migrate -path backend/migrations/github-app -database postgres://{{postgres_user}}:{{POSTGRES_PWD}}@localhost:30006/{{postgres_user}}?sslmode=disable force {{VER}}
