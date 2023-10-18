@@ -1,6 +1,6 @@
 <script >
     import { WalletMultiButton } from "@svelte-on-solana/wallet-adapter-ui";
-    /** @type {import('./$types').PageData} */
+
 	export let data;
 
     function createBounty() {

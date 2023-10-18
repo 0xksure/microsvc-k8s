@@ -47,6 +47,11 @@ spec:
               secretKeyRef:
                 name: secret-vault
                 key: JWT_SECRET
+          - name: KAFKA_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: secret-vault
+                key: KAFKA_PASSWORD
          
           
  

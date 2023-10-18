@@ -154,6 +154,11 @@ local_resource('migrate_ghapp',
             resource_deps=['ghapp-psql']
 )
 
+## Install kafka helm 
+load('ext://helm_resource', 'helm_resource', 'helm_repo')
+helm_repo('bitnami', 'https://charts.bitnami.com/bitnami')
+helm_resource('kafka', 'bitnami/kafka')
+
 
 # Run local commands
 #   Local commands can be helpful for one-time tasks like installing

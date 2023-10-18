@@ -1,0 +1,88 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: kafka
+  labels:
+    project: microservice
+    app: kafka
+spec:
+  selector:
+    matchLabels:
+      app: kafka
+  serviceName: kafka
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: kafka
+    spec:
+      securityContext:
+        runAsUser: 1001 
+        runAsGroup: 1001
+        fsGroup: 1001 
+      containers:
+      - name: kafka
+        resources:
+          limits:
+            memory: "128Mi"
+            cpu: "200m"
+        image: bitnami/kafka
+        env: 
+          - name: KAFKA_CFG_NODE_ID
+            value: "0"
+          - name: KAFKA_KRAFT_CLUSTER_ID
+            value: OTMwNzFhYTY1ODNiNGE5OT
+          - name: KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP
+            value: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
+          - name: KAFKA_CFG_PROCESS_ROLES
+            value: controller,broker
+          - name: KAFKA_CFG_LISTENERS
+            value: PLAINTEXT://:9092,CONTROLLER://:9093
+          - name: KAFKA_CFG_CONTROLLER_QUORUM_VOTERS
+            value: 0@kafka-server:9093
+          - name: KAFKA_CFG_CONTROLLER_LISTENER_NAMES
+            value: CONTROLLER
+          - name: KAFKA_CFG_AUTO_CREATE_TOPICS_ENABLE
+            value: "true"
+        ports:
+        - containerPort: 9092
+          name: kafka-pt
+        - containerPort: 9093
+          name: kafka-ctrl
+        volumeMounts:
+        - name: kafka-data
+          mountPath: /bitnami/kafka
+        - name: kafka-data
+          mountPath: /opt/bitnami/kafka
+          subPath: opt
+        - name: kafka-data
+          mountPath: /opt/bitnami/kafka/config
+          subPath: config
+        - name: kafka-data
+          mountPath: /opt/bitnami/kafka/logs
+          subPath: logs
+      volumes:
+        - name: kafka-data
+          persistentVolumeClaim:
+            claimName: kafka-pvc
+
+--- 
+
+## Set up clusterIP 
+apiVersion: v1
+kind: Service
+metadata:
+  name: kafka
+  labels:
+    app: kafka
+    project: microservice
+spec:
+  ports:
+    - name: kafka-port-pt
+      port: 9092
+      targetPort: kafka-pt
+    - name: kafka-port-ctrl
+      port: 9093
+      targetPort: kafka-ctrl
+  selector:
+    app: kafka

@@ -39,11 +39,7 @@ func initGithubApp(ghConfig *githubapp.Config) (githubapp.ClientCreator, error) 
 
 }
 
-// github_app is a service that listens for github events
-func main() {
-	serverAddr := "0.0.0.0"
-	port := "8080"
-	logger := zerolog.New(os.Stdout).With().Timestamp().Logger()
+func githubWebhook(serverAddr string, port string, logger zerolog.Logger, BountyORM *BountyORM, ghWhErr chan error) {
 	ghConfig := new(githubapp.Config)
 	ghConfig.SetValuesFromEnv("")
 
@@ -52,18 +48,6 @@ func main() {
 		panic(err)
 	}
 
-	// init postgres connection
-	psqlConnStr := "postgres://user:pwd@ghapp-psql-svc:5432/user?sslmode=disable"
-	conn, err := pgx.Connect(context.Background(), psqlConnStr)
-	if err != nil {
-		logger.Print("db open error: ", err)
-		return
-	}
-	defer conn.Close(context.Background())
-
-	BountyORM := &BountyORM{
-		db: conn,
-	}
 	prCommentHandler := &PRCommentHandler{
 		ClientCreator: cc,
 		preamble:      "Sandblizzard",
@@ -80,8 +64,35 @@ func main() {
 	addr := fmt.Sprintf("%s:%s", serverAddr, port)
 
 	logger.Info().Msgf("Starting server on %s:%s", serverAddr, port)
-	err = http.ListenAndServe(addr, nil)
+	ghWhErr <- http.ListenAndServe(addr, nil)
+}
+
+// github_app is a service that listens for github events
+func main() {
+	serverAddr := "0.0.0.0"
+	port := "8080"
+	logger := zerolog.New(os.Stdout).With().Timestamp().Logger()
+	ghWhErr := make(chan error)
+
+	// init postgres connection
+	psqlConnStr := "postgres://user:pwd@ghapp-psql-svc:5432/user?sslmode=disable"
+	conn, err := pgx.Connect(context.Background(), psqlConnStr)
 	if err != nil {
+		logger.Print("db open error: ", err)
+		return
+	}
+	defer conn.Close(context.Background())
+
+	BountyORM := &BountyORM{
+		db: conn,
+	}
+
+	go githubWebhook(serverAddr, port, logger, BountyORM, ghWhErr)
+
+	logger.Info().Msg("Waiting for requests")
+	select {
+	case err := <-ghWhErr:
+		logger.Error().Err(err).Msg("github webhook error")
 		panic(err)
 	}
 }

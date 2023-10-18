@@ -71,7 +71,12 @@ spec:
             valueFrom:
               secretKeyRef:
                 name: secret-vault
-                key: GITHUB_APP_WEBHOOK_SECRET 
+                key: GITHUB_APP_WEBHOOK_SECRET
+          - name: KAFKA_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: secret-vault
+                key: KAFKA_PASSWORD 
           
  
 

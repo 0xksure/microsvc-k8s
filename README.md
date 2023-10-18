@@ -64,3 +64,6 @@ A microservice architecture is chosen because it reduces the logic whitin the se
 - [x] build and expose a frontend server or just a static web server 
 - [ ] Stand up message bus 
 - [ ] Specify ingress and egress rules for k8s clsuter 
+- [ ] Deploy k8s to server 
+- [ ] Setup solana test validator to test integration
+-  [ ] consider using helm charts

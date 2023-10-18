@@ -7,6 +7,7 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/err/m/kafka"
 	"github.com/google/go-github/v55/github"
 	"github.com/palantir/go-githubapp/githubapp"
 	"github.com/pkg/errors"
@@ -19,8 +20,9 @@ import (
 
 type PRCommentHandler struct {
 	githubapp.ClientCreator
-	preamble  string
-	bountyOrm *BountyORM
+	preamble    string
+	bountyOrm   *BountyORM
+	kafkaClient *kafka.BountyKafkaClient
 }
 
 func (h *PRCommentHandler) Handles() []string {
@@ -65,6 +67,8 @@ func (h *PRCommentHandler) CommentIssue(ctx context.Context, event github.IssueC
 	issueId := event.GetIssue().GetID()
 	repoId := repo.GetID()
 	ownerId := repo.GetOwner().GetID()
+
+	// try to get wallet address from userId
 
 	// create bounty in db
 	_, err = h.bountyOrm.createBounty(ctx, int(userId), userName, issueUrl, int(issueId), int(repoId), repoName, int(ownerId), "open")

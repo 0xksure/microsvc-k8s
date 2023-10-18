@@ -4,7 +4,7 @@
 import { error } from '@sveltejs/kit';
 import jwt from 'jsonwebtoken';
 import { Logger } from 'tslog';
-
+import { Kafka } from 'kafkajs';
 
 export const POST = (async (event) => {
     const logger = new Logger();
@@ -38,7 +38,30 @@ export const POST = (async (event) => {
     const walletAddress = requestBody.walletAddress
     if(!walletAddress) throw error(400,'No wallet address found')
 
-    // post data to rpc endpoint 
+    // post data to kafka 
+    const kafkaPwd = process.env.KAFKA_PASSWORD
+    if(!kafkaPwd) throw error(400,'No kafka password found')
+    const kafka = new Kafka({
+        clientId: 'my-app',
+        brokers: ["kafka-controller-0.kafka-controller-headless.default.svc.cluster.local:9092",
+        "kafka-controller-1.kafka-controller-headless.default.svc.cluster.local:9092",
+        "kafka-controller-2.kafka-controller-headless.default.svc.cluster.local:9092"],
+        ssl: false,
+        sasl: {
+            mechanism: 'scram-sha-256',
+            username: 'user1',
+            password: kafkaPwd,
+        }
+    })
+
+    const producer = kafka.producer()
+    await producer.connect()
+    await producer.send({
+        topic: 'linker',
+        messages: [
+            { value: JSON.stringify({username,userId,walletAddress}), partition:0 },
+        ],
+    })
      
     return new Response(JSON.stringify({username,userId,walletAddress}))
 })

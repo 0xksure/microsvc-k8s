@@ -1,3 +1,4 @@
 config.yaml
 k8s/secret.vault.yaml
 .env
+config/

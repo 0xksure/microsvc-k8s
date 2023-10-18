@@ -40,5 +40,5 @@ export const GET = (async ({ url, cookies }) => {
 	});
 
 	const githubUser = await getUserResponse.json();
-	throw redirect(307, `${url.origin}/linker/?ghLogin=${githubUser.login}`);
+	throw redirect(307, `${url.origin}/linker/?ghLogin=${githubUser.login}&ghId=${githubUser.id}`);
 }) satisfies RequestHandler;

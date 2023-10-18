@@ -13,3 +13,19 @@ migrate_down_ghapp POSTGRES_PWD:
 
 migrate_force_ghapp POSTGRES_PWD VER:
 	migrate -path backend/migrations/github-app -database postgres://{{postgres_user}}:{{POSTGRES_PWD}}@localhost:30006/{{postgres_user}}?sslmode=disable force {{VER}}
+
+## prune the entire cluster
+k8s_prune PROJECT: 
+	kubectl delete deploy,services,statefulset,pods -l project={{PROJECT}}
+
+## create kafka client 
+kafka_client_create:
+	kubectl run kafka-client --restart='Never' --image docker.io/bitnami/kafka:3.6.0-debian-11-r0 --namespace default --command -- sleep infinity 
+	kubectl cp --namespace default config/client.properties kafka-client:/tmp/client.properties 
+	kubectl exec --tty -i kafka-client --namespace default -- bash
+
+kafka_client_setup:
+	kubectl cp --namespace default config/client.properties kafka-client:/tmp/client.properties 
+
+kafka_client_consume TOPIC:
+	kubectl exec --tty -i kafka-client --namespace default -- kafka-console-consumer.sh --consumer.config /tmp/client.properties --bootstrap-server kafka.default.svc.cluster.local:9092 --topic {{TOPIC}} --from-beginning
