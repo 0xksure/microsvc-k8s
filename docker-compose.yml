@@ -29,4 +29,11 @@ services:
       context: "./frontend"
     ports: 
       - "3000:3000"
+  solana:
+    image: "err/solana"
+    build: 
+      dockerfile: "./../../solana.dockerfile"
+      context: "./backend/identity"
+    ports: 
+      - "8899:8899"
  

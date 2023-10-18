@@ -92,6 +92,14 @@ context="./frontend",
 dockerfile='frontend.dockerfile',
 )
 
+docker_build(
+        ref = "solana-contract",
+        context = "./backend/identity",
+        dockerfile = "solana.dockerfile",
+        target = "builder",
+        build_args = {"BRIDGE_ADDRESS": "Bridge1p5gheXUvJ6jGWGeCsgPKgnE3YgdGKRVCMY9o"}
+    )
+
 k8s_yaml([
     'k8s/global.configMap.yaml',
     'k8s/secret.vault.yaml', 
@@ -101,6 +109,7 @@ k8s_yaml([
     'k8s/ghapp.deployment.yaml',
     'k8s/ghapp.postgres.yaml',
     'k8s/frontend.deployment.yaml',
+    'k8s/solana.devnet.yaml',
 ])
 
 # Apply Kubernetes manifests
@@ -153,7 +162,14 @@ local_resource('migrate_ghapp',
                cmd='just migrate_up_ghapp pwd',
             resource_deps=['ghapp-psql']
 )
-
+k8s_resource(
+        "solana-devnet",
+        port_forwards = [
+            port_forward(8899, name = "Solana RPC [:8899]", host = "localhost"),
+            port_forward(8900, name = "Solana WS [:8900]", host = "localhost"),
+        ],
+        labels = ["solana"],
+    )
 ## Install kafka helm 
 load('ext://helm_resource', 'helm_resource', 'helm_repo')
 helm_repo('bitnami', 'https://charts.bitnami.com/bitnami')

@@ -37,6 +37,8 @@ After 1 it records the signed to the chosen message bus and redirects the user.
 
 After successfully linking an identity it sends the message to the chose message bus. The event is picked up by the identity service. 
 
+After the bounty is signed the success should be posted to the kafka message bus in order for the github app to pick it up and post it to the github issue  
+
 ## Identity Service (not yet implemented)
 
 
@@ -58,12 +60,17 @@ A microservice architecture is chosen because it reduces the logic whitin the se
 - Kafka (wo zookeeper) as a "message bus"
 - A database for heavy read access 
 
+
+
 # TODO
 - [x] make service 1 make useful calculations
 - [x] stand up a db to store state. Use postgresql rather than scylla. 
 - [x] build and expose a frontend server or just a static web server 
-- [ ] Stand up message bus 
+- [x] Stand up message bus - choose kafka
+- [ ] Setup solana test validator to test integration
+    - Can use the solana network to store identity
+    - Run the bounty contract 
 - [ ] Specify ingress and egress rules for k8s clsuter 
 - [ ] Deploy k8s to server 
-- [ ] Setup solana test validator to test integration
--  [ ] consider using helm charts
+- [x] consider using helm charts - used for kafka
+
