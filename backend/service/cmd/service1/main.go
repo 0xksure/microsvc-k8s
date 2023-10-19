@@ -9,7 +9,7 @@ import (
 	"net/rpc"
 	"time"
 
-	"github.com/err/m/shared"
+	"github.com/err/shared"
 	"github.com/gorilla/mux"
 	_ "github.com/lib/pq"
 )

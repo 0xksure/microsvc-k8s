@@ -28,17 +28,187 @@ function $$SETUP_STATE(hydrateRuntimeState, basePath) {
         [null, {\
           "packageLocation": "./",\
           "packageDependencies": [\
+            ["@bufbuild/buf", "npm:1.27.1"],\
+            ["@bufbuild/protobuf", "npm:1.3.3"],\
+            ["@bufbuild/protoc-gen-es", "virtual:dc3fc578bfa5e06182a4d2be39ede0bc5b74940b1ffe0d70c26892ab140a4699787750fba175dc306292e80b4aa2c8c5f68c2a821e69b2c37e360c0dff36ff66#npm:1.3.3"]\
           ],\
           "linkType": "SOFT"\
+        }]\
+      ]],\
+      ["@bufbuild/buf", [\
+        ["npm:1.27.1", {\
+          "packageLocation": "./.yarn/unplugged/@bufbuild-buf-npm-1.27.1-3c9894686b/node_modules/@bufbuild/buf/",\
+          "packageDependencies": [\
+            ["@bufbuild/buf", "npm:1.27.1"],\
+            ["@bufbuild/buf-darwin-arm64", "npm:1.27.1"],\
+            ["@bufbuild/buf-darwin-x64", "npm:1.27.1"],\
+            ["@bufbuild/buf-linux-aarch64", "npm:1.27.1"],\
+            ["@bufbuild/buf-linux-x64", "npm:1.27.1"],\
+            ["@bufbuild/buf-win32-arm64", "npm:1.27.1"],\
+            ["@bufbuild/buf-win32-x64", "npm:1.27.1"]\
+          ],\
+          "linkType": "HARD"\
+        }]\
+      ]],\
+      ["@bufbuild/buf-darwin-arm64", [\
+        ["npm:1.27.1", {\
+          "packageLocation": "./.yarn/unplugged/@bufbuild-buf-darwin-arm64-npm-1.27.1-2098f7e0e2/node_modules/@bufbuild/buf-darwin-arm64/",\
+          "packageDependencies": [\
+            ["@bufbuild/buf-darwin-arm64", "npm:1.27.1"]\
+          ],\
+          "linkType": "HARD"\
+        }]\
+      ]],\
+      ["@bufbuild/buf-darwin-x64", [\
+        ["npm:1.27.1", {\
+          "packageLocation": "./.yarn/unplugged/@bufbuild-buf-darwin-x64-npm-1.27.1-33c66fc870/node_modules/@bufbuild/buf-darwin-x64/",\
+          "packageDependencies": [\
+            ["@bufbuild/buf-darwin-x64", "npm:1.27.1"]\
+          ],\
+          "linkType": "HARD"\
+        }]\
+      ]],\
+      ["@bufbuild/buf-linux-aarch64", [\
+        ["npm:1.27.1", {\
+          "packageLocation": "./.yarn/unplugged/@bufbuild-buf-linux-aarch64-npm-1.27.1-cd11abde14/node_modules/@bufbuild/buf-linux-aarch64/",\
+          "packageDependencies": [\
+            ["@bufbuild/buf-linux-aarch64", "npm:1.27.1"]\
+          ],\
+          "linkType": "HARD"\
+        }]\
+      ]],\
+      ["@bufbuild/buf-linux-x64", [\
+        ["npm:1.27.1", {\
+          "packageLocation": "./.yarn/unplugged/@bufbuild-buf-linux-x64-npm-1.27.1-b151847a96/node_modules/@bufbuild/buf-linux-x64/",\
+          "packageDependencies": [\
+            ["@bufbuild/buf-linux-x64", "npm:1.27.1"]\
+          ],\
+          "linkType": "HARD"\
+        }]\
+      ]],\
+      ["@bufbuild/buf-win32-arm64", [\
+        ["npm:1.27.1", {\
+          "packageLocation": "./.yarn/unplugged/@bufbuild-buf-win32-arm64-npm-1.27.1-2f3a608ca2/node_modules/@bufbuild/buf-win32-arm64/",\
+          "packageDependencies": [\
+            ["@bufbuild/buf-win32-arm64", "npm:1.27.1"]\
+          ],\
+          "linkType": "HARD"\
+        }]\
+      ]],\
+      ["@bufbuild/buf-win32-x64", [\
+        ["npm:1.27.1", {\
+          "packageLocation": "./.yarn/unplugged/@bufbuild-buf-win32-x64-npm-1.27.1-8212021d87/node_modules/@bufbuild/buf-win32-x64/",\
+          "packageDependencies": [\
+            ["@bufbuild/buf-win32-x64", "npm:1.27.1"]\
+          ],\
+          "linkType": "HARD"\
+        }]\
+      ]],\
+      ["@bufbuild/protobuf", [\
+        ["npm:1.3.3", {\
+          "packageLocation": "./.yarn/cache/@bufbuild-protobuf-npm-1.3.3-a3ef6576b7-20181f769b.zip/node_modules/@bufbuild/protobuf/",\
+          "packageDependencies": [\
+            ["@bufbuild/protobuf", "npm:1.3.3"]\
+          ],\
+          "linkType": "HARD"\
+        }]\
+      ]],\
+      ["@bufbuild/protoc-gen-es", [\
+        ["npm:1.3.3", {\
+          "packageLocation": "./.yarn/unplugged/@bufbuild-protoc-gen-es-virtual-ea3a9c91a8/node_modules/@bufbuild/protoc-gen-es/",\
+          "packageDependencies": [\
+            ["@bufbuild/protoc-gen-es", "npm:1.3.3"]\
+          ],\
+          "linkType": "SOFT"\
+        }],\
+        ["virtual:dc3fc578bfa5e06182a4d2be39ede0bc5b74940b1ffe0d70c26892ab140a4699787750fba175dc306292e80b4aa2c8c5f68c2a821e69b2c37e360c0dff36ff66#npm:1.3.3", {\
+          "packageLocation": "./.yarn/unplugged/@bufbuild-protoc-gen-es-virtual-ea3a9c91a8/node_modules/@bufbuild/protoc-gen-es/",\
+          "packageDependencies": [\
+            ["@bufbuild/protoc-gen-es", "virtual:dc3fc578bfa5e06182a4d2be39ede0bc5b74940b1ffe0d70c26892ab140a4699787750fba175dc306292e80b4aa2c8c5f68c2a821e69b2c37e360c0dff36ff66#npm:1.3.3"],\
+            ["@bufbuild/protobuf", "npm:1.3.3"],\
+            ["@bufbuild/protoplugin", "npm:1.3.3"],\
+            ["@types/bufbuild__protobuf", null]\
+          ],\
+          "packagePeers": [\
+            "@bufbuild/protobuf",\
+            "@types/bufbuild__protobuf"\
+          ],\
+          "linkType": "HARD"\
+        }]\
+      ]],\
+      ["@bufbuild/protoplugin", [\
+        ["npm:1.3.3", {\
+          "packageLocation": "./.yarn/cache/@bufbuild-protoplugin-npm-1.3.3-c7eb4f85ca-a80fd25bd9.zip/node_modules/@bufbuild/protoplugin/",\
+          "packageDependencies": [\
+            ["@bufbuild/protoplugin", "npm:1.3.3"],\
+            ["@bufbuild/protobuf", "npm:1.3.3"],\
+            ["@typescript/vfs", "npm:1.5.0"],\
+            ["typescript", "patch:typescript@npm%3A4.5.2#~builtin<compat/typescript>::version=4.5.2&hash=bcec9a"]\
+          ],\
+          "linkType": "HARD"\
+        }]\
+      ]],\
+      ["@typescript/vfs", [\
+        ["npm:1.5.0", {\
+          "packageLocation": "./.yarn/cache/@typescript-vfs-npm-1.5.0-f8621cadc2-09916e2fc5.zip/node_modules/@typescript/vfs/",\
+          "packageDependencies": [\
+            ["@typescript/vfs", "npm:1.5.0"],\
+            ["debug", "virtual:f8621cadc2383e3a5fb8464e7d20d376056fea5fcd7d6fdc3bfc052a9ba0b0a2ca63c044501e7320017892bc385313fa86065a6cf00718b9328f862a6228d617#npm:4.3.4"]\
+          ],\
+          "linkType": "HARD"\
+        }]\
+      ]],\
+      ["debug", [\
+        ["npm:4.3.4", {\
+          "packageLocation": "./.yarn/cache/debug-npm-4.3.4-4513954577-3dbad3f94e.zip/node_modules/debug/",\
+          "packageDependencies": [\
+            ["debug", "npm:4.3.4"]\
+          ],\
+          "linkType": "SOFT"\
+        }],\
+        ["virtual:f8621cadc2383e3a5fb8464e7d20d376056fea5fcd7d6fdc3bfc052a9ba0b0a2ca63c044501e7320017892bc385313fa86065a6cf00718b9328f862a6228d617#npm:4.3.4", {\
+          "packageLocation": "./.yarn/__virtual__/debug-virtual-ede4ece35f/0/cache/debug-npm-4.3.4-4513954577-3dbad3f94e.zip/node_modules/debug/",\
+          "packageDependencies": [\
+            ["debug", "virtual:f8621cadc2383e3a5fb8464e7d20d376056fea5fcd7d6fdc3bfc052a9ba0b0a2ca63c044501e7320017892bc385313fa86065a6cf00718b9328f862a6228d617#npm:4.3.4"],\
+            ["@types/supports-color", null],\
+            ["ms", "npm:2.1.2"],\
+            ["supports-color", null]\
+          ],\
+          "packagePeers": [\
+            "@types/supports-color",\
+            "supports-color"\
+          ],\
+          "linkType": "HARD"\
+        }]\
+      ]],\
+      ["ms", [\
+        ["npm:2.1.2", {\
+          "packageLocation": "./.yarn/cache/ms-npm-2.1.2-ec0c1512ff-673cdb2c31.zip/node_modules/ms/",\
+          "packageDependencies": [\
+            ["ms", "npm:2.1.2"]\
+          ],\
+          "linkType": "HARD"\
         }]\
       ]],\
       ["root-workspace-0b6124", [\
         ["workspace:.", {\
           "packageLocation": "./",\
           "packageDependencies": [\
-            ["root-workspace-0b6124", "workspace:."]\
+            ["root-workspace-0b6124", "workspace:."],\
+            ["@bufbuild/buf", "npm:1.27.1"],\
+            ["@bufbuild/protobuf", "npm:1.3.3"],\
+            ["@bufbuild/protoc-gen-es", "virtual:dc3fc578bfa5e06182a4d2be39ede0bc5b74940b1ffe0d70c26892ab140a4699787750fba175dc306292e80b4aa2c8c5f68c2a821e69b2c37e360c0dff36ff66#npm:1.3.3"]\
           ],\
           "linkType": "SOFT"\
+        }]\
+      ]],\
+      ["typescript", [\
+        ["patch:typescript@npm%3A4.5.2#~builtin<compat/typescript>::version=4.5.2&hash=bcec9a", {\
+          "packageLocation": "./.yarn/cache/typescript-patch-e2f8286ac9-e25e689eba.zip/node_modules/typescript/",\
+          "packageDependencies": [\
+            ["typescript", "patch:typescript@npm%3A4.5.2#~builtin<compat/typescript>::version=4.5.2&hash=bcec9a"]\
+          ],\
+          "linkType": "HARD"\
         }]\
       ]]\
     ]\

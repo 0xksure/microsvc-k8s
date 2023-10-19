@@ -1,10 +1,37 @@
-<script >
+<script lang="ts">
+   import  * as proto  from '$lib/index_pb';
     import { WalletMultiButton } from "@svelte-on-solana/wallet-adapter-ui";
 
-	export let data;
+	export let data: {
+        bountyParams:proto.BountyMessage
+    };
 
     function createBounty() {
         console.log("create bounty");
+        // sign transaction and send
+
+        // call backend with info to create bounty
+        fetch("http://localhost:8000/api/bounty/create", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+                bountySignStatus: proto.BountySignStatus.FAILED_TO_SIGN,
+                bountyId: data.bountyParams.Bountyid,
+                bountyUIAmount: data.bountyParams.BountyUIAmount,
+                tokenAddress: data.bountyParams.TokenAddress,
+                creatorAddress: data.bountyParams.CreatorAddress,
+                installationId: data.bountyParams.InstallationId
+            }),
+        })
+            .then((response) => response.json())
+            .then((data) => {
+                console.log("Success:", data);
+            })
+            .catch((error) => {
+                console.error("Error:", error);
+            });
     }
 </script>
 
@@ -16,10 +43,10 @@
             <h2 class="text-2xl text-white">Bounty</h2>
     </div>
     <div>
-        <p class="text-white">Bounty ID: {data.bountyParams.bountyId}</p>
-        <p class="text-white">Amount: {data.bountyParams.bountyUIAmount}</p>
-        <p class="text-white">Token address: {data.bountyParams.tokenAddress}</p>
-        <p class="text-white">Creator: {data.bountyParams.creatorAddress}</p>
+        <p class="text-white">Bounty ID: {data.bountyParams.Bountyid}</p>
+        <p class="text-white">Amount: {data.bountyParams.BountyUIAmount}</p>
+        <p class="text-white">Token address: {data.bountyParams.TokenAddress}</p>
+        <p class="text-white">Creator: {data.bountyParams.CreatorAddress}</p>
     </div>
     <button class="m-2 border-md bg-blue-200 p-2 rounded-md" on:click={createBounty}>
         Create Bounty

@@ -5,6 +5,7 @@ import { error } from '@sveltejs/kit';
 import jwt from 'jsonwebtoken';
 import { Logger } from 'tslog';
 import { Kafka } from 'kafkajs';
+import * as proto from '$lib/index_pb';
 
 export const POST = (async (event) => {
     const logger = new Logger();
@@ -15,7 +16,7 @@ export const POST = (async (event) => {
     if(!jwtSecret) throw error(400,'No jwt secret found')
     const ghJwtDecoded = jwt.verify(ghJwt, jwtSecret)
     if(!ghJwtDecoded) throw error(400,'Invalid jwt')
-    const ghAccessToken = ghJwtDecoded?.token
+    const ghAccessToken = (ghJwtDecoded as any)?.token
     logger.info(`linker.link.post: ghAccessToken=${ghAccessToken}, ghJwt=${ghJwt}, ghJwtDecoded=${JSON.stringify(ghJwtDecoded)}`);
     if(!ghAccessToken) throw error(400,'No github access token found')
 
@@ -54,12 +55,18 @@ export const POST = (async (event) => {
         }
     })
 
+    const linkerMessage = new proto.LinkerMessage({
+        Username: username,
+        UserId: userId,
+        WalletAddress: walletAddress
+    })
+     
     const producer = kafka.producer()
     await producer.connect()
     await producer.send({
         topic: 'linker',
         messages: [
-            { value: JSON.stringify({username,userId,walletAddress}), partition:0 },
+            { value: Buffer.from(linkerMessage.toBinary()), partition:0 },
         ],
     })
      

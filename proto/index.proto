@@ -1,0 +1,26 @@
+syntax = "proto3";
+package bounty;
+option go_package = "protoc/bounty";
+
+enum BountySignStatus {
+    CREATED = 0;
+    SIGNED = 1;
+    COMPLETED = 2;
+    FAILED_TO_SIGN = 3;
+    CANCELLED = 4;
+}
+
+message BountyMessage {
+    BountySignStatus BountySignStatus = 1;
+    int64 Bountyid = 2;
+    string BountyUIAmount = 3;
+    string TokenAddress = 4;
+    string CreatorAddress = 5;
+    int64 InstallationId = 6;
+}
+
+message LinkerMessage {
+    string Username = 1;
+    string UserId = 2;
+    string WalletAddress = 3;
+}

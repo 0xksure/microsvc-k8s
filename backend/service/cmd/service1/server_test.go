@@ -8,7 +8,7 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/err/m/shared"
+	"github.com/err/shared"
 )
 
 var (

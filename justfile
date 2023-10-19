@@ -29,3 +29,17 @@ kafka_client_setup:
 
 kafka_client_consume TOPIC:
 	kubectl exec --tty -i kafka-client --namespace default -- kafka-console-consumer.sh --consumer.config /tmp/client.properties --bootstrap-server kafka.default.svc.cluster.local:9092 --topic {{TOPIC}} --from-beginning
+
+protoc_gen_ts:
+	rm -rf frontend/proto
+	cp -r proto frontend/proto
+	cd frontend && npx buf generate proto
+	rm -rf frontend/proto
+
+protoc_gen_go:
+	protoc \
+	--go_out backend/service/ \
+	./proto/index.proto    
+
+# Generate protoc for ts and go
+protoc_gen: protoc_gen_ts protoc_gen_go

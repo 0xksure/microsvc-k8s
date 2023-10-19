@@ -7,6 +7,11 @@ import (
 	"os"
 	"time"
 
+	"github.com/err/db"
+	github_bounty "github.com/err/github"
+	"github.com/err/kafka"
+	"github.com/err/protoc/bounty"
+	"github.com/golang/protobuf/proto"
 	"github.com/gregjones/httpcache"
 	"github.com/jackc/pgx/v5"
 	"github.com/justinas/alice"
@@ -39,19 +44,13 @@ func initGithubApp(ghConfig *githubapp.Config) (githubapp.ClientCreator, error) 
 
 }
 
-func githubWebhook(serverAddr string, port string, logger zerolog.Logger, BountyORM *BountyORM, ghWhErr chan error) {
-	ghConfig := new(githubapp.Config)
-	ghConfig.SetValuesFromEnv("")
-
-	cc, err := initGithubApp(ghConfig)
-	if err != nil {
-		panic(err)
-	}
+func githubWebhook(serverAddr string, port string, logger zerolog.Logger, bountyORM *db.BountyORM, kafkaClient *kafka.BountyKafkaClient, clientCreator githubapp.ClientCreator, ghConfig *githubapp.Config, ghWhErr chan error) {
 
 	prCommentHandler := &PRCommentHandler{
-		ClientCreator: cc,
+		ClientCreator: clientCreator,
 		preamble:      "Sandblizzard",
-		bountyOrm:     BountyORM,
+		bountyOrm:     bountyORM,
+		kafkaClient:   kafkaClient,
 	}
 
 	webhookHandler := githubapp.NewDefaultEventDispatcher(*ghConfig, prCommentHandler)
@@ -69,11 +68,19 @@ func githubWebhook(serverAddr string, port string, logger zerolog.Logger, Bounty
 
 // github_app is a service that listens for github events
 func main() {
+	ctx := context.Background()
 	serverAddr := "0.0.0.0"
 	port := "8080"
 	logger := zerolog.New(os.Stdout).With().Timestamp().Logger()
+	kafkaMessage := make(chan kafka.KafkaMessage)
 	ghWhErr := make(chan error)
-
+	ghConfig := new(githubapp.Config)
+	ghConfig.SetValuesFromEnv("")
+	cc, err := initGithubApp(ghConfig)
+	if err != nil {
+		logger.Error().Err(err).Msg("Failed to initialize github app")
+		return
+	}
 	// init postgres connection
 	psqlConnStr := "postgres://user:pwd@ghapp-psql-svc:5432/user?sslmode=disable"
 	conn, err := pgx.Connect(context.Background(), psqlConnStr)
@@ -83,16 +90,47 @@ func main() {
 	}
 	defer conn.Close(context.Background())
 
-	BountyORM := &BountyORM{
-		db: conn,
+	bountyORM := db.InitBountyOrm(conn)
+
+	kafkaBountyClient := &kafka.BountyKafkaClient{
+		Logger: &logger,
 	}
 
-	go githubWebhook(serverAddr, port, logger, BountyORM, ghWhErr)
+	go githubWebhook(serverAddr, port, logger, &bountyORM, kafkaBountyClient, cc, ghConfig, ghWhErr)
+	go kafkaBountyClient.GenerateKafkaConsumer(ctx, "bounty", kafkaMessage)
 
 	logger.Info().Msg("Waiting for requests")
 	select {
 	case err := <-ghWhErr:
 		logger.Error().Err(err).Msg("github webhook error")
 		panic(err)
+	case msg := <-kafkaMessage:
+		ctx := context.Background()
+		var bountyMessage bounty.BountyMessage
+		err := proto.Unmarshal(msg.Msg, &bountyMessage)
+		if err != nil {
+			logger.Error().Err(err).Msgf("Failed to decode bounty message %v", msg.Msg)
+			return
+		}
+
+		logger.Info().Msgf("Received bounty message %v", &bountyMessage)
+
+		// check bounty message
+		client, err := cc.NewInstallationClient(bountyMessage.InstallationId)
+		if err != nil {
+			logger.Error().Err(err).Msgf("Failed to create client for installation %d", bountyMessage.InstallationId)
+			return
+		}
+
+		githubBountyClient := github_bounty.NewBountyGithubClientWithLogger(client, "Sandblizzard", &bountyORM, kafkaBountyClient, logger)
+		bountyHandler := &BountyHandler{
+			bountyMessage:      &bountyMessage,
+			githubBountyClient: githubBountyClient,
+		}
+		if err := bountyHandler.Handle(ctx); err != nil {
+			logger.Error().Err(err).Msgf("Failed to handle bounty message %v", bountyMessage)
+			return
+		}
+
 	}
 }

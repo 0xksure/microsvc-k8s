@@ -1,4 +1,4 @@
-module github.com/err/m
+module github.com/err
 
 go 1.21.2
 

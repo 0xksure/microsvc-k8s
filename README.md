@@ -67,10 +67,18 @@ A microservice architecture is chosen because it reduces the logic whitin the se
 - [x] stand up a db to store state. Use postgresql rather than scylla. 
 - [x] build and expose a frontend server or just a static web server 
 - [x] Stand up message bus - choose kafka
+- [x] consider using helm charts - used for kafka
 - [ ] Setup solana test validator to test integration
     - Can use the solana network to store identity
     - Run the bounty contract 
-- [ ] Specify ingress and egress rules for k8s clsuter 
+- [ ] Specify ingress and egress rules for k8s clsuter
+    - For security
 - [ ] Deploy k8s to server 
-- [x] consider using helm charts - used for kafka
+    - Server could be a raspberry pi with a ngrok tunnel
+- [ ] Implement signing flow agains local validator with pub to kafka on topic: bounty
+- [ ] Consume topic: bounty on the github app and post success to github
+- [ ] [ghapp] Handle complete bounty and either
+    - let the ghapp work as a relayer 
+    - let the creator release the bounty
+
 
