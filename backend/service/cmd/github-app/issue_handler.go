@@ -49,6 +49,7 @@ func (h *PRCommentHandler) Handle(ctx context.Context, eventType, deliveryId str
 	}
 	githubBountyClient := github_bounty.NewBountyGithubClientWithLogger(client, h.preamble, h.bountyOrm, h.kafkaClient, *logger)
 
+	// when issue is opened
 	if event.GetAction() == "opened" {
 		logger.Info().Msg("Issue comment event action is opened")
 		msg, err := githubBountyClient.GetNewBountyMessage(ctx, event)
@@ -62,6 +63,28 @@ func (h *PRCommentHandler) Handle(ctx context.Context, eventType, deliveryId str
 			return err
 		}
 		return nil
+	}
+
+	// when issue is closed
+	if event.GetAction() == "closed" {
+		logger.Info().Msg("Issue comment event action is closed")
+
+		msg, err := githubBountyClient.GetCloseBountyMessage(ctx, event)
+		if err != nil {
+			logger.Err(err).Msg("No bounty found")
+			return nil
+		}
+
+		if err := githubBountyClient.CloseAndCommentIssue(ctx, event, msg); err != nil {
+			logger.Error().Err(err).Msg("Failed to comment on issue")
+			return err
+		}
+		return nil
+	}
+
+	// when issue is commented
+	if event.GetAction() == "created" {
+		logger.Info().Msg("Issue is commented")
 	}
 
 	logger.Info().Msg("No action to be made on issue comment")

@@ -30,9 +30,10 @@ services:
     ports: 
       - "3000:3000"
   solana:
+    platform: linux/amd64
     image: "err/solana"
     build: 
-      dockerfile: "./../../solana.dockerfile"
+      dockerfile: "./../../solana2.dockerfile"
       context: "./backend/identity"
     ports: 
       - "8899:8899"

@@ -101,8 +101,33 @@ func (b *BountyORM) GetBountyOnIssueId(ctx context.Context, issueId int) (Bounty
 	var row Bounty
 	err := b.db.QueryRow(ctx,
 		`
-		SELECT id, entity_id, url, issue_id,repo_id, repo_name, owner_id,status,created_at, updated_at FROM bounty WHERE issue_id=$1
-		`, issueId).Scan(&row.Id, &row.EntityId, &row.Url, &row.IssueId, &row.RepoId, &row.RepoName, &row.OwnerId, &row.Status, &row.CreatedAt, &row.UpdatedAt)
+		SELECT 
+			id, 
+			entity_id, 
+			url, 
+			issue_id,
+			issue_number,
+			repo_id, 
+			repo_name, 
+			repo_owner,
+			owner_id,
+			status,
+			created_at, 
+			updated_at 
+		FROM bounty WHERE issue_id=$1
+		`, issueId).Scan(
+		&row.Id,
+		&row.EntityId,
+		&row.Url,
+		&row.IssueId,
+		&row.IssueNumber,
+		&row.RepoId,
+		&row.RepoName,
+		&row.RepoOwner,
+		&row.OwnerId,
+		&row.Status,
+		&row.CreatedAt,
+		&row.UpdatedAt)
 	return row, err
 }
 

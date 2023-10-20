@@ -38,8 +38,8 @@ func NewBountyGithubClientWithLogger(client *github.Client, preamble string, bou
 	}
 }
 
-func CreateSigningLink(bountytId, installationId int64, tokenAddress, bountyUIAmount, creatorAddress string) string {
-	return fmt.Sprintf("https://app.bounties.network/bounty?bountyId=%d&tokenAddress=%s&bountyUIAmount=%s&creatorAddress=%s&installationId=%d", bountytId, tokenAddress, bountyUIAmount, creatorAddress, installationId)
+func CreateSigningLink(bountytId, installationId int64, tokenAddress, bountyUIAmount, creatorAddress, issueUrl string) string {
+	return fmt.Sprintf("https://localhost:3030/bounty?bountyId=%d&tokenAddress=%s&bountyUIAmount=%s&creatorAddress=%s&installationId=%d&referrer=%s", bountytId, tokenAddress, bountyUIAmount, creatorAddress, installationId, issueUrl)
 }
 
 func (b *BountyGithub) UpdateAndCommentIssue(ctx context.Context, issueId int, status, msg string) error {
@@ -55,6 +55,28 @@ func (b *BountyGithub) UpdateAndCommentIssue(ctx context.Context, issueId int, s
 	}
 	// update bounty status
 	if err := b.bountyOrm.UpdateBountyStatus(ctx, bounty.Id, status); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (b *BountyGithub) CommentIssue(ctx context.Context, issueId int, msg string) error {
+	bounty, err := b.bountyOrm.GetBountyOnIssueId(ctx, issueId)
+	if err != nil {
+		return err
+	}
+
+	// comment event
+	if err = b.CommentEvent(ctx, bounty.RepoOwner, bounty.RepoName, msg, bounty.IssueNumber, b.logger); err != nil {
+		b.logger.Error().Err(err).Msg("Failed to comment on pull request")
+		return github.ErrBranchNotProtected
+	}
+	return nil
+}
+
+func (b *BountyGithub) CloseAndCommentIssue(ctx context.Context, event github.IssueCommentEvent, msg string) error {
+	issueId := event.GetIssue().GetID()
+	if err := b.UpdateAndCommentIssue(ctx, int(issueId), "closed", msg); err != nil {
 		return err
 	}
 	return nil
@@ -135,10 +157,10 @@ func (h *BountyGithub) GetNewBountyMessage(ctx context.Context, event github.Iss
 	// check if bounty is in text
 	// if not, return false
 	// if yes, create bount
-	r := regexp.MustCompile(`\$(\w+:\d+)\$`)
+	r := regexp.MustCompile(`\$(\w+:\d+.{1}\d+)\$`)
 	bounty := r.FindString(issueText)
 	if bounty == "" {
-		return "", errors.New("No bounty found")
+		return "", errors.New("No bounty found in issueText")
 	}
 	bountyParts := strings.Split(strings.Trim(bounty, "$"), ":")
 	if len(bountyParts) != 2 {
@@ -150,7 +172,13 @@ func (h *BountyGithub) GetNewBountyMessage(ctx context.Context, event github.Iss
 	amount := bountyParts[1]
 
 	// generate signing link
-	signingLink := CreateSigningLink(issueId, instId, "0xaljkdhjkls", amount, "0xkjfksla")
-	msg := fmt.Sprintf("In order for the bounty for %s %s to be activated %s please open \n \n %s \n\n to sign the transaction", amount, token, author, signingLink)
+	signingLink := CreateSigningLink(issueId, instId, "0xaljkdhjkls", amount, "0xkjfksla", *event.GetIssue().URL)
+	msg := fmt.Sprintf("In order for the bounty for %s %s to be activated %s please open \n \n :coin: [the bounty link](%s) :coin: \n\n and sign the transaction", amount, token, author, signingLink)
+	return msg, nil
+}
+
+// GetCloseBountyMessage uses the github event to create a close message
+func (h *BountyGithub) GetCloseBountyMessage(ctx context.Context, event github.IssueCommentEvent) (string, error) {
+	msg := fmt.Sprintf("Bounty has been closed by %s ", event.GetComment().GetUser().GetLogin())
 	return msg, nil
 }

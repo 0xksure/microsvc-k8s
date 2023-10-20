@@ -3,42 +3,43 @@ import { error } from '@sveltejs/kit';
 
 
 /** @type {import('./$types').PageLoad} */
-export async function load({ params,url }) {
-    let bountyIdProto= url.searchParams.get("bountyId");
-    if(!bountyIdProto) {
+export async function load(data) {
+    let bountyIdProto = data.url.searchParams.get("bountyId");
+    if (!bountyIdProto) {
         throw error(404, 'Bounty not found');
     }
     const bountyId = parseInt(bountyIdProto)
-    const tokenAddress= url.searchParams.get("tokenAddress");
-    if(!tokenAddress) {
+    const tokenAddress = data.url.searchParams.get("tokenAddress");
+    if (!tokenAddress) {
         throw error(404, 'Token address not supplied');
     }
-    const bountyUIAmount= url.searchParams.get("bountyUIAmount");
-    if(!bountyUIAmount) {
+    const bountyUIAmount = data.url.searchParams.get("bountyUIAmount");
+    if (!bountyUIAmount) {
         throw error(404, 'Bounty UI Amount not found');
     }
-    const creatorAddress= url.searchParams.get("creatorAddress");
-    if(!creatorAddress) {
+    const creatorAddress = data.url.searchParams.get("creatorAddress");
+    if (!creatorAddress) {
         throw error(404, 'Creator not found');
     }
-    const installationId = url.searchParams.get("installationId");
-    if(!installationId) {
+    const installationId = data.url.searchParams.get("installationId");
+    if (!installationId) {
         throw error(404, 'Installation Id not found');
     }
 
     const bountyParams = new proto.BountyMessage({
         BountySignStatus: proto.BountySignStatus.CREATED,
-        Bountyid:BigInt(bountyId),
+        Bountyid: BigInt(bountyId),
         BountyUIAmount: bountyUIAmount,
         TokenAddress: tokenAddress,
         CreatorAddress: creatorAddress,
         InstallationId: BigInt(installationId)
     })
 
+    const referrer = data.url.searchParams.get('referrer');
 
-    
- 
-	return {
-		bountyParams: bountyParams.toJson()
-	}
+
+    return {
+        referrer: referrer,
+        bountyParams: bountyParams.toJson()
+    }
 }

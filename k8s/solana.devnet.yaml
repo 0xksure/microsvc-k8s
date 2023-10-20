@@ -39,25 +39,10 @@ spec:
           command:
             - /root/.local/share/solana/install/active_release/bin/solana-test-validator
             - --bpf-program
-            - Bridge1p5gheXUvJ6jGWGeCsgPKgnE3YgdGKRVCMY9o
-            - /opt/solana/deps/bridge.so
-            - --bpf-program
-            - B6RHG3mfcckmrYN1UhmJzyS1XX3fZKbkeUcpJe9Sy3FE
-            - /opt/solana/deps/token_bridge.so
-            - --bpf-program
-            - NFTWqJR8YnRVqPDvTJrYuLrQDitTG5AScqbeghi4zSA
-            - /opt/solana/deps/nft_bridge.so
-            - --bpf-program
-            - CP1co2QMMoDPbsmV7PGcUTLFwyhgCgTXt25gLQ5LewE1
-            - /opt/solana/deps/cpi_poster.so
-            - --bpf-program
-            - metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s
-            - /opt/solana/deps/mpl_token_metadata.so
-            - --bpf-program
-            - Ex9bCdVMSfx7EzB3pgSi2R4UHwJAXvTw18rBQm5YQ8gK
-            - /opt/solana/deps/wormhole_migration.so
-            # - --log
-            - -q
+            - 3rQketG7pSopHE1APQKZu1BQofanqbCBP7spZ4CBGrUm
+            - /opt/solana/deps/identity.so
+            - --log
+            # - -q
           ports:
             - containerPort: 8001
               name: gossip
@@ -94,14 +79,3 @@ spec:
               port: rpc
               path: /health
             periodSeconds: 1
-        - name: setup
-          image: bridge-client
-          command:
-            - /bin/bash
-            - -c
-            - "cd /usr/src/solana && ./devnet_setup.sh"
-          readinessProbe:
-            tcpSocket:
-              port: 2000
-            periodSeconds: 1
-            failureThreshold: 300

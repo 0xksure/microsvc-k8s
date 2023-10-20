@@ -2,7 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: github-app
-  labels: 
+  labels:
     project: microservice
     app: github-app
 spec:
@@ -16,74 +16,70 @@ spec:
         app: github-app
     spec:
       containers:
-      - name: github-app
-        image: err/github-app
-        imagePullPolicy: Never
-        resources:
-          limits:
-            memory: "128Mi"
-            cpu: "200m"
-        ports:
-        - containerPort: 8080
-          name: ghapp-port
-        env:
-          - name: GITHUB_WEB_URL
-            valueFrom:
-              configMapKeyRef:
-                name: global-config
-                key: GITHUB_WEB_URL
-          - name: GITHUB_V3_API_URL
-            valueFrom:
-              configMapKeyRef:
-                name: global-config
-                key: GITHUB_V3_API_URL
-          - name: GITHUB_V4_API_URL
-            valueFrom:
-              configMapKeyRef:
-                name: global-config
-                key: GITHUB_V4_API_URL
-          - name: GITHUB_APP_INTEGRATION_ID
-            valueFrom:
-              secretKeyRef:
-                name: secret-vault
-                key: GITHUB_APP_INTEGRATION_ID
-          - name: GITHUB_APP_PRIVATE_KEY
-            valueFrom:
-              secretKeyRef:
-                name: secret-vault
-                key: GITHUB_APP_PRIVATE_KEY
-          - name: GITHUB_APP_CLIENT_ID
-            valueFrom:
-              secretKeyRef:
-                name: secret-vault
-                key: GITHUB_OAUTH_CLIENT_ID
-          - name: GITHUB_APP_CLIENT_SECRET
-            valueFrom:
-              secretKeyRef:
-                name: secret-vault
-                key: GITHUB_OAUTH_CLIENT_SECRET
-          - name: GITHUB_APP_WEBHOOK_SECRET
-            valueFrom:
-              secretKeyRef:
-                name: secret-vault
-                key: GITHUB_APP_WEBHOOK_SECRET
-          - name: GITHUB_APP_WEBHOOK_SECRET
-            valueFrom:
-              secretKeyRef:
-                name: secret-vault
-                key: GITHUB_APP_WEBHOOK_SECRET
-          - name: KAFKA_PASSWORD
-            valueFrom:
-              secretKeyRef:
-                name: secret-vault
-                key: KAFKA_PASSWORD 
-          
- 
-
+        - name: github-app
+          image: err/github-app
+          imagePullPolicy: Never
+          resources:
+            limits:
+              memory: "128Mi"
+              cpu: "200m"
+          ports:
+            - containerPort: 8080
+              name: ghapp-port
+          env:
+            - name: GITHUB_WEB_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: global-config
+                  key: GITHUB_WEB_URL
+            - name: GITHUB_V3_API_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: global-config
+                  key: GITHUB_V3_API_URL
+            - name: GITHUB_V4_API_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: global-config
+                  key: GITHUB_V4_API_URL
+            - name: GITHUB_APP_INTEGRATION_ID
+              valueFrom:
+                secretKeyRef:
+                  name: secret-vault
+                  key: GITHUB_APP_INTEGRATION_ID
+            - name: GITHUB_APP_PRIVATE_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: secret-vault
+                  key: GITHUB_APP_PRIVATE_KEY
+            - name: GITHUB_APP_CLIENT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: secret-vault
+                  key: GITHUB_OAUTH_CLIENT_ID
+            - name: GITHUB_APP_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: secret-vault
+                  key: GITHUB_OAUTH_CLIENT_SECRET
+            - name: GITHUB_APP_WEBHOOK_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: secret-vault
+                  key: GITHUB_APP_WEBHOOK_SECRET
+            - name: GITHUB_APP_WEBHOOK_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: secret-vault
+                  key: GITHUB_APP_WEBHOOK_SECRET
+            - name: KAFKA_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: secret-vault
+                  key: KAFKA_PASSWORD
 
 ---
-
-## Service 
+## Service
 apiVersion: v1
 kind: Service
 metadata:
@@ -93,15 +89,14 @@ metadata:
     app: github-app-srv
 spec:
   ports:
-  - name: ghapp-port-ext
-    port: 80
-    protocol: TCP
-    targetPort: ghapp-port
+    - name: ghapp-port-ext
+      port: 80
+      protocol: TCP
+      targetPort: ghapp-port
   selector:
     app: github-app
 
 ---
-
 ## Load Balancer
 apiVersion: v1
 kind: Service
@@ -112,10 +107,10 @@ metadata:
     app: ghapp-lb
 spec:
   type: LoadBalancer
-  selector: 
+  selector:
     app: github-app
   ports:
     - name: "80"
       port: 8080
-      targetPort: 8080
+      targetPort: ghapp-port
       protocol: TCP

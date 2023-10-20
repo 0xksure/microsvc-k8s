@@ -49,7 +49,7 @@ func (b *BountyKafkaClient) createKafkaConsumer(topic string) {
 
 // GenerateKafkaConsumer generates a kafka consumer for the given topic
 func (b *BountyKafkaClient) GenerateKafkaConsumer(ctx context.Context, topic string, kf chan KafkaMessage) {
-	mechanism, err := scram.Mechanism(scram.SHA512, "user1", os.Getenv("KAFKA_PASSWORD"))
+	mechanism, err := scram.Mechanism(scram.SHA256, "user1", os.Getenv("KAFKA_PASSWORD"))
 	if err != nil {
 		panic(err)
 	}
@@ -64,11 +64,11 @@ func (b *BountyKafkaClient) GenerateKafkaConsumer(ctx context.Context, topic str
 		Brokers: []string{"kafka-controller-0.kafka-controller-headless.default.svc.cluster.local:9092",
 			"kafka-controller-1.kafka-controller-headless.default.svc.cluster.local:9092",
 			"kafka-controller-2.kafka-controller-headless.default.svc.cluster.local:9092"},
-		Topic:     topic,
-		MaxBytes:  10e6, // 10MB
-		Logger:    b.Logger,
-		Partition: 0,
-		Dialer:    dialer,
+		Topic:    topic,
+		MaxBytes: 10e6, // 10MB
+		Logger:   b.Logger,
+		Dialer:   dialer,
+		GroupID:  "1",
 	})
 	defer r.Close()
 

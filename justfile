@@ -18,17 +18,23 @@ migrate_force_ghapp POSTGRES_PWD VER:
 k8s_prune PROJECT: 
 	kubectl delete deploy,services,statefulset,pods -l project={{PROJECT}}
 
+# install the kafka operator
+kafka_operator_install:
+	helm install my-release oci://registry-1.docker.io/bitnamicharts/kafka
+
 ## create kafka client 
 kafka_client_create:
 	kubectl run kafka-client --restart='Never' --image docker.io/bitnami/kafka:3.6.0-debian-11-r0 --namespace default --command -- sleep infinity 
-	kubectl cp --namespace default config/client.properties kafka-client:/tmp/client.properties 
-	kubectl exec --tty -i kafka-client --namespace default -- bash
 
 kafka_client_setup:
 	kubectl cp --namespace default config/client.properties kafka-client:/tmp/client.properties 
 
 kafka_client_consume TOPIC:
 	kubectl exec --tty -i kafka-client --namespace default -- kafka-console-consumer.sh --consumer.config /tmp/client.properties --bootstrap-server kafka.default.svc.cluster.local:9092 --topic {{TOPIC}} --from-beginning
+
+# gets the kafka password
+kafka_pwd:
+	kubectl get secret kafka-user-passwords --namespace default -o jsonpath='{.data.client-passwords}' | base64 -d | cut -d , -f 1
 
 protoc_gen_ts:
 	rm -rf frontend/proto
@@ -43,3 +49,7 @@ protoc_gen_go:
 
 # Generate protoc for ts and go
 protoc_gen: protoc_gen_ts protoc_gen_go
+
+# sh into the solana container
+solana_sh:
+	docker run -it err/solana sh
