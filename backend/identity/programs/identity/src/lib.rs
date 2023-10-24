@@ -39,7 +39,7 @@ pub struct CreateIdentity<'info> {
 #[account]
 pub struct Identity {
     pub authority: Pubkey,
-    pub authority_seeds: Vec<u8>,
+    pub bump: u8,
     pub name: String,
     pub email: String,
     pub phone: String,

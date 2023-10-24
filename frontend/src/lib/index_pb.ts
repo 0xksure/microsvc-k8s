@@ -78,6 +78,26 @@ export class BountyMessage extends Message<BountyMessage> {
    */
   InstallationId = protoInt64.zero;
 
+  /**
+   * @generated from field: string platform = 7;
+   */
+  platform = "";
+
+  /**
+   * @generated from field: string organization = 8;
+   */
+  organization = "";
+
+  /**
+   * @generated from field: string team = 9;
+   */
+  team = "";
+
+  /**
+   * @generated from field: string domainType = 10;
+   */
+  domainType = "";
+
   constructor(data?: PartialMessage<BountyMessage>) {
     super();
     proto3.util.initPartial(data, this);
@@ -92,6 +112,10 @@ export class BountyMessage extends Message<BountyMessage> {
     { no: 4, name: "TokenAddress", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 5, name: "CreatorAddress", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 6, name: "InstallationId", kind: "scalar", T: 3 /* ScalarType.INT64 */ },
+    { no: 7, name: "platform", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 8, name: "organization", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 9, name: "team", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 10, name: "domainType", kind: "scalar", T: 9 /* ScalarType.STRING */ },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): BountyMessage {

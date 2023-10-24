@@ -17,6 +17,10 @@ message BountyMessage {
     string TokenAddress = 4;
     string CreatorAddress = 5;
     int64 InstallationId = 6;
+    string platform = 7;
+    string organization = 8;
+    string team = 9;
+    string domainType = 10;
 }
 
 message LinkerMessage {

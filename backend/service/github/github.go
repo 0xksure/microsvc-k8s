@@ -38,8 +38,8 @@ func NewBountyGithubClientWithLogger(client *github.Client, preamble string, bou
 	}
 }
 
-func CreateSigningLink(bountytId, installationId int64, tokenAddress, bountyUIAmount, creatorAddress, issueUrl string) string {
-	return fmt.Sprintf("https://localhost:3030/bounty?bountyId=%d&tokenAddress=%s&bountyUIAmount=%s&creatorAddress=%s&installationId=%d&referrer=%s", bountytId, tokenAddress, bountyUIAmount, creatorAddress, installationId, issueUrl)
+func CreateSigningLink(bountytId, installationId int64, tokenAddress, bountyUIAmount, creatorAddress, issueUrl, organization, team, domainType string) string {
+	return fmt.Sprintf("https://localhost:3030/bounty?bountyId=%d&tokenAddress=%s&bountyUIAmount=%s&creatorAddress=%s&installationId=%d&referrer=%s&platform=%s&organization=%s&team=%s&domainType=%s", bountytId, tokenAddress, bountyUIAmount, creatorAddress, installationId, issueUrl, "github", organization, team, domainType)
 }
 
 func (b *BountyGithub) UpdateAndCommentIssue(ctx context.Context, issueId int, status, msg string) error {
@@ -172,7 +172,7 @@ func (h *BountyGithub) GetNewBountyMessage(ctx context.Context, event github.Iss
 	amount := bountyParts[1]
 
 	// generate signing link
-	signingLink := CreateSigningLink(issueId, instId, "0xaljkdhjkls", amount, "0xkjfksla", *event.GetIssue().URL)
+	signingLink := CreateSigningLink(issueId, instId, "0xaljkdhjkls", amount, "0xkjfksla", *event.GetIssue().URL, *event.GetOrganization().Name, event.Repo.GetFullName(), "issues")
 	msg := fmt.Sprintf("In order for the bounty for %s %s to be activated %s please open \n \n :coin: [the bounty link](%s) :coin: \n\n and sign the transaction", amount, token, author, signingLink)
 	return msg, nil
 }

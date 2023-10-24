@@ -26,13 +26,34 @@ export async function load(data) {
         throw error(404, 'Installation Id not found');
     }
 
+    const platform = data.url.searchParams.get("platform");
+    if (!platform) {
+        throw error(404, 'Platform not found');
+    }
+    const organization = data.url.searchParams.get("organization");
+    if (!organization) {
+        throw error(404, 'Organization not found');
+    }
+    const team = data.url.searchParams.get("team");
+    if (!team) {
+        throw error(404, 'Team not found');
+    }
+    const domainType = data.url.searchParams.get("domainType");
+    if (!domainType) {
+        throw error(404, 'Domain type not found');
+    }
+
     const bountyParams = new proto.BountyMessage({
         BountySignStatus: proto.BountySignStatus.CREATED,
         Bountyid: BigInt(bountyId),
         BountyUIAmount: bountyUIAmount,
         TokenAddress: tokenAddress,
         CreatorAddress: creatorAddress,
-        InstallationId: BigInt(installationId)
+        InstallationId: BigInt(installationId),
+        platform: platform,
+        organization: organization,
+        team: team,
+        domainType: domainType
     })
 
     const referrer = data.url.searchParams.get('referrer');

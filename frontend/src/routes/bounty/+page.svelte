@@ -1,7 +1,11 @@
 <script lang="ts">
     import * as proto from "$lib/index_pb";
     import { WalletMultiButton } from "@svelte-on-solana/wallet-adapter-ui";
+    import { walletStore } from "@svelte-on-solana/wallet-adapter-core";
 
+    import * as bounty from "bounty-sdk/dist/cjs";
+    import { Connection, PublicKey } from "@solana/web3.js";
+    import { sendAndConfirmTransaction } from "bounty-sdk/dist/cjs/utils";
     export let data: {
         bountyParams: proto.BountyMessage;
     };
@@ -25,9 +29,37 @@
         }, 1000);
     }
 
-    function createBounty() {
+    async function createBounty() {
         console.log("create bounty");
+        const rpcUrl =
+            process.env.RPC_URL ?? "https://api.mainnet-beta.solana.com";
+        if (!rpcUrl) throw new Error("RPC_URL is not defined");
+        const connection = new Connection(rpcUrl, "confirmed");
         // sign transaction and send
+        if (
+            !walletStore ||
+            !$walletStore.publicKey ||
+            !$walletStore.signTransaction
+        ) {
+            return;
+        }
+
+        const bountySDK = new bounty.BountySdk(
+            $walletStore.publicKey,
+            connection
+        );
+        const createBounty = await bountySDK.createBounty({
+            id: data.bountyParams.Bountyid.toString(),
+            bountyAmount: data.bountyParams.BountyUIAmount,
+            bountyCreator: $walletStore.publicKey,
+            mint: new PublicKey(data.bountyParams.TokenAddress),
+            platform: data.bountyParams.platform,
+            organization: data.bountyParams.organization,
+            team: data.bountyParams.team,
+            domainType: data.bountyParams.domainType,
+        });
+        await $walletStore?.signTransaction(await createBounty.vtx);
+        await sendAndConfirmTransaction(connection, await createBounty.vtx);
 
         // call backend with info to create bounty
         fetch("http://localhost:3030/bounty/create", {
