@@ -3,3 +3,4 @@ k8s/secret.vault.yaml
 .env
 config/
 test-ledger
+.yarn

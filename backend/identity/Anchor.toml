@@ -16,3 +16,4 @@ wallet = "/Users/kristoffer/.config/solana/id.json"
 
 [scripts]
 test = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/**/*.ts"
+build_sdk = "cd sdk-ts && bun run build"
