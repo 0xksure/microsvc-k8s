@@ -1,26 +1,43 @@
 import * as anchor from "@coral-xyz/anchor";
 import { Identity, IDL } from "./idl/identity"
-import { encode } from "@coral-xyz/anchor/dist/cjs/utils/bytes/bs58";
+import { bs58 } from "@coral-xyz/anchor/dist/cjs/utils/bytes";
 export * as utils from "./utils"
 export { IdentitySdk }
 
 const IDENTITY_SEED = "identity"
 const IDENTITY_PROGRAM_ID = new anchor.web3.PublicKey("3rQketG7pSopHE1APQKZu1BQofanqbCBP7spZ4CBGrUm")
 
-const getIdentityProgramPDA = () => {
+export const getIdentityProgramPDA = () => {
     return anchor.web3.PublicKey.findProgramAddressSync(
         [Buffer.from(IDENTITY_SEED)],
         IDENTITY_PROGRAM_ID
     );
 }
 
-const getIdentityPDA = (social: string, userId: number) => {
+export const getIdentityPDA = (social: string, userId: number) => {
     return anchor.web3.PublicKey.findProgramAddressSync(
         [Buffer.from(IDENTITY_SEED), Buffer.from(social), new anchor.BN(userId).toBuffer("le", 4)],
         IDENTITY_PROGRAM_ID
     )
 }
 
+
+/**
+ * convertByteArrayToString takes a an array of bytes and 
+ * strips the trailing zeros and converts it to a string
+ * @param bytes 
+ * @returns 
+ */
+export const convertByteArrayToString = (bytes: Uint8Array) => {
+    const lastSignificantByte = bytes.findIndex((byte) => byte === 0)
+    const byteSubset = bytes.slice(0, lastSignificantByte)
+    return Buffer.from(byteSubset).toString()
+}
+
+export const convertStringOfSizeToString = (string: string) => {
+    var enc = new TextEncoder();
+    return convertByteArrayToString(enc.encode(string))
+}
 
 
 class IdentitySdk {
@@ -193,5 +210,42 @@ class IdentitySdk {
         }
     }
 
+    /**
+     * getIdentityFromAddress allows you to get all identities associated with an address
+     * @param address 
+     * @returns 
+     */
+    getIdentityFromAddress = async ({ address }: { address: anchor.web3.PublicKey }) => {
+        const memcmpFilters = [
+            {
+                memcmp: {
+                    offset: 8,
+                    bytes: address.toBase58()
+                }
+            }
+        ]
+        return this.program.account.identity.all(memcmpFilters)
+    }
+
+    /**
+     * getIdentityFromUsername allows you to get all identities associated with a username
+     * @param param0 
+     * @returns 
+     */
+    getIdentityFromUsername = async ({
+        username
+    }: { username: string }) => {
+        const memcmpFilters = [
+            {
+                memcmp: {
+                    offset: 8 + 32 + 4 + 32 + 4 + 4,
+                    bytes: bs58.encode(Buffer.from(username))
+                }
+            }
+        ]
+
+        return this.program.account.identity.all(memcmpFilters)
+    }
 
 }
+

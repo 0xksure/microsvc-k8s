@@ -2,10 +2,22 @@
 // and making a call to the identity service to link the github account to the wallet
 
 import { error } from '@sveltejs/kit';
+import * as anchor from "@coral-xyz/anchor"
 import jwt from 'jsonwebtoken';
 import { Logger } from 'tslog';
 import { Kafka } from 'kafkajs';
 import * as proto from '$lib/index_pb';
+import { Keypair, VersionedTransaction } from '@solana/web3.js';
+import { bs58 } from '@coral-xyz/anchor/dist/cjs/utils/bytes/index.js';
+import * as identity from "idlinker-sdk";
+
+
+export interface LinkerResponse {
+    username: string,
+    userId: number,
+    walletAddress: string
+    vtx: VersionedTransaction
+}
 
 export const POST = (async (event) => {
     const logger = new Logger();
@@ -38,6 +50,25 @@ export const POST = (async (event) => {
     // wallet address
     const walletAddress = requestBody.walletAddress
     if (!walletAddress) throw error(400, 'No wallet address found')
+    const identityOwner = requestBody.identityOwner
+    if (!identityOwner) throw error(400, 'No identity owner found')
+
+    // load wallet from json file 
+    const secretKey = process.env.WALLET_SECRET_KEY
+    if (!secretKey) throw error(400, 'No wallet secret key found')
+    const wallet = Keypair.fromSecretKey(bs58.decode(secretKey))
+
+    // create identity transaction
+    const identitySdk = new identity.IdentitySdk(wallet.publicKey);
+    const createIdentity = await identitySdk.createIdentity({
+        social: "github",
+        username,
+        userId,
+        identityOwner: identityOwner,
+        protocolOwner: wallet.publicKey,
+    });
+    const vtx = createIdentity.vtx
+    vtx.sign([wallet])
 
     // post data to kafka 
     const kafkaPwd = process.env.KAFKA_PASSWORD
@@ -70,5 +101,11 @@ export const POST = (async (event) => {
         ],
     })
 
-    return new Response(JSON.stringify({ username, userId, walletAddress }))
+    const linkerResponse: LinkerResponse = {
+        username,
+        userId,
+        walletAddress,
+        vtx
+    }
+    return new Response(JSON.stringify(linkerResponse))
 })

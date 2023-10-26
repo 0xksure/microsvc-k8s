@@ -16,14 +16,14 @@ function $$SETUP_STATE(hydrateRuntimeState, basePath) {
         "reference": "workspace:."\
       },\
       {\
-        "name": "identity-sdk",\
+        "name": "idlinker-sdk",\
         "reference": "workspace:sdk-ts"\
       }\
     ],\
     "enableTopLevelFallback": true,\
     "ignorePatternData": "(^(?:\\\\.yarn\\\\/sdks(?:\\\\/(?!\\\\.{1,2}(?:\\\\/|$))(?:(?:(?!(?:^|\\\\/)\\\\.{1,2}(?:\\\\/|$)).)*?)|$))$)",\
     "fallbackExclusionList": [\
-      ["identity-sdk", ["workspace:sdk-ts"]],\
+      ["idlinker-sdk", ["workspace:sdk-ts"]],\
       ["root-workspace-0b6124", ["workspace:."]]\
     ],\
     "fallbackPool": [\
@@ -2215,18 +2215,18 @@ function $$SETUP_STATE(hydrateRuntimeState, basePath) {
           "linkType": "HARD"\
         }]\
       ]],\
-      ["identity-sdk", [\
+      ["idlinker-sdk", [\
         ["workspace:sdk-ts", {\
           "packageLocation": "./sdk-ts/",\
           "packageDependencies": [\
-            ["identity-sdk", "workspace:sdk-ts"],\
+            ["idlinker-sdk", "workspace:sdk-ts"],\
             ["@coral-xyz/anchor", "npm:0.28.0"],\
             ["@solana/spl-token", "virtual:dc3fc578bfa5e06182a4d2be39ede0bc5b74940b1ffe0d70c26892ab140a4699787750fba175dc306292e80b4aa2c8c5f68c2a821e69b2c37e360c0dff36ff66#npm:0.3.8"],\
             ["@types/bn.js", "npm:5.1.3"],\
             ["@types/node", "npm:20.8.8"],\
             ["@types/node-fetch", "npm:2.6.7"],\
             ["standard-version", "npm:9.5.0"],\
-            ["ts-node", "virtual:cb9f36ac60922cb25b536d184f76436510d63b78844938d94b9ad75dfd7259b603467363ddbb024e36aa8eb5af996b6f044333d2c4cb2341600a457769ee0c0f#npm:10.9.1"],\
+            ["ts-node", "virtual:ec20dfb85ef611273b073bc8e13638b286419e93413fb194c3d6e14d13096bc7ac7f4cd896c1b38d9a632ff5aa5f1c38d4a6890c57bc160040d12a2da494872f#npm:10.9.1"],\
             ["typescript", "patch:typescript@npm%3A5.2.2#~builtin<compat/typescript>::version=5.2.2&hash=f3b441"]\
           ],\
           "linkType": "SOFT"\
@@ -4161,10 +4161,10 @@ function $$SETUP_STATE(hydrateRuntimeState, basePath) {
           ],\
           "linkType": "HARD"\
         }],\
-        ["virtual:cb9f36ac60922cb25b536d184f76436510d63b78844938d94b9ad75dfd7259b603467363ddbb024e36aa8eb5af996b6f044333d2c4cb2341600a457769ee0c0f#npm:10.9.1", {\
-          "packageLocation": "./.yarn/__virtual__/ts-node-virtual-4064dcbb1c/0/cache/ts-node-npm-10.9.1-6c268be7f4-090adff130.zip/node_modules/ts-node/",\
+        ["virtual:ec20dfb85ef611273b073bc8e13638b286419e93413fb194c3d6e14d13096bc7ac7f4cd896c1b38d9a632ff5aa5f1c38d4a6890c57bc160040d12a2da494872f#npm:10.9.1", {\
+          "packageLocation": "./.yarn/__virtual__/ts-node-virtual-bc548e9792/0/cache/ts-node-npm-10.9.1-6c268be7f4-090adff130.zip/node_modules/ts-node/",\
           "packageDependencies": [\
-            ["ts-node", "virtual:cb9f36ac60922cb25b536d184f76436510d63b78844938d94b9ad75dfd7259b603467363ddbb024e36aa8eb5af996b6f044333d2c4cb2341600a457769ee0c0f#npm:10.9.1"],\
+            ["ts-node", "virtual:ec20dfb85ef611273b073bc8e13638b286419e93413fb194c3d6e14d13096bc7ac7f4cd896c1b38d9a632ff5aa5f1c38d4a6890c57bc160040d12a2da494872f#npm:10.9.1"],\
             ["@cspotcode/source-map-support", "npm:0.8.1"],\
             ["@swc/core", null],\
             ["@swc/wasm", null],\

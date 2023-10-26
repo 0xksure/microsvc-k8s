@@ -27,10 +27,12 @@ export const sendAndConfirmTransaction = async (
         const signature = await connection.sendTransaction(transaction, {
             skipPreflight: false,
         });
+        console.log("Waiting for confirmation...")
         const confirmation = await connection.confirmTransaction({
             signature: signature,
             ...latestBlockhash
         });
+        console.log("Transaction confirmed")
         return confirmation
     } catch (err) {
         console.log("err", err)

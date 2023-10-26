@@ -4,6 +4,7 @@ import * as identity from "../sdk-ts/src/index"
 import { sendAndConfirmTransaction } from "../sdk-ts/src/utils";
 import { assert, config, expect, use } from 'chai';
 import * as chaiAsPromised from "chai-as-promised"
+import { bs58 } from "@coral-xyz/anchor/dist/cjs/utils/bytes";
 use(chaiAsPromised.default)
 /**
  * topUpAccount is a helper function to top up an account with SOL
@@ -45,6 +46,7 @@ describe("identity", () => {
     await topUpAccount(program.provider.connection, user);
 
     // initialize protocol
+
     const initializeIdentity = await identitySdk.initializeProtocol()
     await sendAndConfirmTransaction(
       program.provider.connection,
@@ -55,6 +57,8 @@ describe("identity", () => {
 
     const identityProgramAccount = await program.account.identityProgram.fetch(initializeIdentity.identityProgramPDA[0])
     expect(identityProgramAccount.protocolOwner.toString()).to.equal(wallet.payer.publicKey.toString())
+
+
   })
 
   it("Create identity -> Should succeed ", async () => {
@@ -263,6 +267,39 @@ describe("identity", () => {
     expect(identity.social.github).to.not.be.undefined
     expect(identity.userId).to.equal(createIdentityParams.userId)
     expect(identity.address.toString()).to.equal(newOwner.publicKey.toString())
+  })
+
+  it.only("create identity and fetch it using the username ", async () => {
+    const username = "partyOn"
+    const createIdentityParams = {
+      social: "github",
+      userId: 444330,
+      username,
+      identityOwner: user.publicKey,
+      protocolOwner: wallet.publicKey
+    }
+    const createIdentity = await identitySdk.createIdentity(createIdentityParams)
+    await sendAndConfirmTransaction(
+      program.provider.connection,
+      createIdentity.vtx,
+      [user.payer, wallet.payer],
+
+    )
+    const firstCreatedIdentity = await program.account.identity.fetch(createIdentity.identityPDA[0])
+    // strip trailing zeros from username array
+    expect(firstCreatedIdentity.social.toString()).to.not.be.undefined
+    expect(firstCreatedIdentity.userId).to.equal(createIdentityParams.userId)
+    expect(identity.convertStringOfSizeToString(firstCreatedIdentity.username)).to.equal(createIdentityParams.username)
+    expect(firstCreatedIdentity.address.toString()).to.equal(user.publicKey.toString())
+
+
+
+    const matchingUnAccounts = await identitySdk.getIdentityFromUsername({
+      username
+    })
+    console.log("matchingUnAccounts: ", matchingUnAccounts)
+    expect(matchingUnAccounts.length).to.equal(1)
+    expect(identity.convertStringOfSizeToString(matchingUnAccounts[0].account.username)).to.equal(createIdentityParams.username)
   })
 
 });

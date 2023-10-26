@@ -2,7 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: frontend
-  labels: 
+  labels:
     project: microservice
     app: frontend
 spec:
@@ -16,49 +16,49 @@ spec:
         app: frontend
     spec:
       containers:
-      - name: frontend
-        image: err/frontend
-        imagePullPolicy: Never
-        resources:
-          limits:
-            memory: "128Mi"
-            cpu: "200m"
-        ports:
-        - containerPort: 3000
-          name: frontend-port
-        env:
-          - name: RPC_URL
-            valueFrom:
-              configMapKeyRef:
-                name: global-config
-                key: RPC_URL
-          - name: GITHUB_CLIENT_ID
-            valueFrom:
-              secretKeyRef:
-                name: secret-vault
-                key: GITHUB_OAUTH_CLIENT_ID
-          - name: GITHUB_CLIENT_SECRET
-            valueFrom:
-              secretKeyRef:
-                name: secret-vault
-                key: GITHUB_OAUTH_CLIENT_SECRET
-          - name: JWT_SECRET
-            valueFrom:
-              secretKeyRef:
-                name: secret-vault
-                key: JWT_SECRET
-          - name: KAFKA_PASSWORD
-            valueFrom:
-              secretKeyRef:
-                name: secret-vault
-                key: KAFKA_PASSWORD
-         
-          
- 
-
+        - name: frontend
+          image: err/frontend
+          imagePullPolicy: Never
+          resources:
+            limits:
+              memory: "128Mi"
+              cpu: "200m"
+          ports:
+            - containerPort: 3000
+              name: frontend-port
+          env:
+            - name: RPC_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: secret-vault
+                  key: RPC_URL
+            - name: WALLET_SECRET_KEY
+              valueFrom:
+                configMapKeyRef:
+                  name: secret-vault
+                  key: WALLET_SECRET_KEY
+            - name: GITHUB_CLIENT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: secret-vault
+                  key: GITHUB_OAUTH_CLIENT_ID
+            - name: GITHUB_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: secret-vault
+                  key: GITHUB_OAUTH_CLIENT_SECRET
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: secret-vault
+                  key: JWT_SECRET
+            - name: KAFKA_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: secret-vault
+                  key: KAFKA_PASSWORD
 
 ---
-
 ## Load Balancer
 apiVersion: v1
 kind: Service
@@ -69,7 +69,7 @@ metadata:
     app: frontend-lb
 spec:
   type: LoadBalancer
-  selector: 
+  selector:
     app: frontend
   ports:
     - name: "http"

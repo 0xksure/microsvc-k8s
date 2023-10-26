@@ -1887,9 +1887,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"identity-sdk@workspace:sdk-ts":
+"idlinker-sdk@workspace:sdk-ts":
   version: 0.0.0-use.local
-  resolution: "identity-sdk@workspace:sdk-ts"
+  resolution: "idlinker-sdk@workspace:sdk-ts"
   dependencies:
     "@coral-xyz/anchor": ^0.28.0
     "@solana/spl-token": ^0.3.7

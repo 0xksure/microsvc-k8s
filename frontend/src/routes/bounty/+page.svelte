@@ -3,9 +3,8 @@
     import { WalletMultiButton } from "@svelte-on-solana/wallet-adapter-ui";
     import { walletStore } from "@svelte-on-solana/wallet-adapter-core";
 
-    import * as bounty from "bounty-sdk/dist/cjs";
+    import * as bounty from "bounty-sdk";
     import { Connection, PublicKey } from "@solana/web3.js";
-    import { sendAndConfirmTransaction } from "bounty-sdk/dist/cjs/utils";
     export let data: {
         bountyParams: proto.BountyMessage;
     };
@@ -59,7 +58,10 @@
             domainType: data.bountyParams.domainType,
         });
         await $walletStore?.signTransaction(await createBounty.vtx);
-        await sendAndConfirmTransaction(connection, await createBounty.vtx);
+        await bounty.utils.sendAndConfirmTransaction(
+            connection,
+            await createBounty.vtx
+        );
 
         // call backend with info to create bounty
         fetch("http://localhost:3030/bounty/create", {

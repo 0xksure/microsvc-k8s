@@ -113,7 +113,7 @@ pub struct CreateIdentity<'info> {
             social.as_bytes(),
             user_id.to_le_bytes().as_ref()
         ],
-        space= 8 + size_of::<Identity>(),
+        space= 8 + 32 +4 +32 +4+4+32+1,
         bump,
     )]
     identity: Account<'info, Identity>,
@@ -132,7 +132,7 @@ pub struct UpdateUsername<'info> {
         mut,
         seeds = [
             IDENTITY_SEED.as_bytes(),
-            identity.social_raw.as_bytes(),
+            identity.social.as_bytes(),
             identity.user_id.to_le_bytes().as_ref()
         ],
         bump = identity.bump,
@@ -157,7 +157,7 @@ pub struct TransferOwnership<'info> {
         mut,
         seeds = [
             IDENTITY_SEED.as_bytes(),
-            identity.social_raw.as_bytes(),
+            identity.social.as_bytes(),
             identity.user_id.to_le_bytes().as_ref()
         ],
         bump = identity.bump,
@@ -179,7 +179,7 @@ pub struct DeleteIdentity<'info> {
         close = account_holder,
         seeds = [
             IDENTITY_SEED.as_bytes(),
-            identity.social_raw.as_bytes(),
+            identity.social.as_bytes(),
             identity.user_id.to_le_bytes().as_ref()
         ],
         bump = identity.bump,
@@ -196,43 +196,6 @@ pub struct IdentityProgram {
     pub bump: u8,
 }
 
-#[derive(AnchorSerialize, AnchorDeserialize, Clone, Debug)]
-pub enum Social {
-    Facebook,
-    Twitter,
-    Instagram,
-    LinkedIn,
-    Github,
-    Website,
-    Email,
-}
-impl Social {
-    pub fn to_u8(&self) -> u8 {
-        match self {
-            Social::Facebook => 0,
-            Social::Twitter => 1,
-            Social::Instagram => 2,
-            Social::LinkedIn => 3,
-            Social::Github => 4,
-            Social::Website => 5,
-            Social::Email => 6,
-        }
-    }
-
-    pub fn from_string(social: &str) -> Social {
-        match social {
-            "facebook" => Social::Facebook,
-            "twitter" => Social::Twitter,
-            "instagram" => Social::Instagram,
-            "linkedin" => Social::LinkedIn,
-            "github" => Social::Github,
-            "website" => Social::Website,
-            "email" => Social::Email,
-            _ => panic!("Invalid social media"),
-        }
-    }
-}
-
 /// The identity is the account that is used to link
 /// a web2 account to a web3 account
 ///
@@ -242,7 +205,7 @@ impl Social {
 pub struct Identity {
     // address of the account holder
     pub address: Pubkey, // 32 bytes
-    pub social: Social,  // 1 byte
+    pub social: String,  // 4+32 bytes
 
     /// the id of the user on the social media
     /// this is immutable
@@ -250,15 +213,22 @@ pub struct Identity {
 
     /// the username of the user on the social media
     /// this is mutable
-    pub username: Vec<u8>, // 32 bytes
+    pub username: String, // 4+32 bytes
 
     /// the bump is used to generate the address
-    pub bump: u8,
-
-    pub social_raw: String,
+    pub bump: u8, // 1 byte
 }
 
 impl Identity {
+    pub fn get_u32string(&self, str: String) -> String {
+        if str.len() > 32 {
+            panic!("Username is too long")
+        }
+        // allocate a 32 bytes array and fill it with the username
+        let array_of_zeros = vec![0u8; 32 - str.len()];
+        return str + std::str::from_utf8(&array_of_zeros).unwrap();
+    }
+
     pub fn init(
         &mut self,
         address: Pubkey,
@@ -267,14 +237,11 @@ impl Identity {
         user_id: u32,
         bump: &u8,
     ) -> Result<()> {
-        let username = username_raw.as_bytes().to_vec();
-        if username.len() > 32 {
-            return Err(ErrorCodes::UsernameTooLong.into());
-        }
+        let username = self.get_u32string(username_raw);
+        let social = self.get_u32string(social_raw);
         self.username = username;
         self.address = address;
-        self.social = Social::from_string(&social_raw);
-        self.social_raw = social_raw;
+        self.social = social;
         self.user_id = user_id;
         self.bump = *bump;
 
@@ -282,9 +249,6 @@ impl Identity {
     }
 
     pub fn update_username(&mut self, username: String) {
-        if username.len() > 32 {
-            panic!("Social name is too long")
-        }
-        self.username = username.as_bytes().to_vec();
+        self.username = self.get_u32string(username);
     }
 }

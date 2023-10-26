@@ -195,9 +195,7 @@ export type Identity = {
           },
           {
             "name": "social",
-            "type": {
-              "defined": "Social"
-            }
+            "type": "string"
           },
           {
             "name": "userId",
@@ -213,7 +211,7 @@ export type Identity = {
               "the username of the user on the social media",
               "this is mutable"
             ],
-            "type": "bytes"
+            "type": "string"
           },
           {
             "name": "bump",
@@ -221,41 +219,6 @@ export type Identity = {
               "the bump is used to generate the address"
             ],
             "type": "u8"
-          },
-          {
-            "name": "socialRaw",
-            "type": "string"
-          }
-        ]
-      }
-    }
-  ],
-  "types": [
-    {
-      "name": "Social",
-      "type": {
-        "kind": "enum",
-        "variants": [
-          {
-            "name": "Facebook"
-          },
-          {
-            "name": "Twitter"
-          },
-          {
-            "name": "Instagram"
-          },
-          {
-            "name": "LinkedIn"
-          },
-          {
-            "name": "Github"
-          },
-          {
-            "name": "Website"
-          },
-          {
-            "name": "Email"
           }
         ]
       }
@@ -477,9 +440,7 @@ export const IDL: Identity = {
           },
           {
             "name": "social",
-            "type": {
-              "defined": "Social"
-            }
+            "type": "string"
           },
           {
             "name": "userId",
@@ -495,7 +456,7 @@ export const IDL: Identity = {
               "the username of the user on the social media",
               "this is mutable"
             ],
-            "type": "bytes"
+            "type": "string"
           },
           {
             "name": "bump",
@@ -503,41 +464,6 @@ export const IDL: Identity = {
               "the bump is used to generate the address"
             ],
             "type": "u8"
-          },
-          {
-            "name": "socialRaw",
-            "type": "string"
-          }
-        ]
-      }
-    }
-  ],
-  "types": [
-    {
-      "name": "Social",
-      "type": {
-        "kind": "enum",
-        "variants": [
-          {
-            "name": "Facebook"
-          },
-          {
-            "name": "Twitter"
-          },
-          {
-            "name": "Instagram"
-          },
-          {
-            "name": "LinkedIn"
-          },
-          {
-            "name": "Github"
-          },
-          {
-            "name": "Website"
-          },
-          {
-            "name": "Email"
           }
         ]
       }

@@ -39,6 +39,7 @@
     "autoprefixer": "^10.4.15",
     "bounty-sdk": "^0.0.6",
     "google-protobuf": "^3.21.2",
+    "idlinker-sdk": "^0.0.5",
     "jsonwebtoken": "^9.0.2",
     "kafkajs": "^2.2.4",
     "ts-protoc-gen": "^0.15.0",
