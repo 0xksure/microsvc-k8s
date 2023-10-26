@@ -4,3 +4,4 @@ k8s/secret.vault.yaml
 config/
 test-ledger
 .yarn
+*/**/dist

@@ -40,7 +40,7 @@ pub mod identity {
     ) -> Result<()> {
         let identity = &mut ctx.accounts.identity;
         let bump = ctx.bumps.get("identity").unwrap();
-        identity.new(
+        identity.init(
             *ctx.accounts.account_holder.key,
             social,
             username,
@@ -64,7 +64,7 @@ pub mod identity {
         Ok(())
     }
 
-    pub fn delete_identity(ctx: Context<DeleteIdentity>) -> Result<()> {
+    pub fn delete_identity(_ctx: Context<DeleteIdentity>) -> Result<()> {
         Ok(())
     }
 }
@@ -259,7 +259,7 @@ pub struct Identity {
 }
 
 impl Identity {
-    pub fn new(
+    pub fn init(
         &mut self,
         address: Pubkey,
         social_raw: String,
@@ -282,7 +282,7 @@ impl Identity {
     }
 
     pub fn update_username(&mut self, username: String) {
-        if (username.len() > 32) {
+        if username.len() > 32 {
             panic!("Social name is too long")
         }
         self.username = username.as_bytes().to_vec();
