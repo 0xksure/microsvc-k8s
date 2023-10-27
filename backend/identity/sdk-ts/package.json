@@ -1,7 +1,7 @@
 {
   "name": "idlinker-sdk",
   "packageManager": "yarn@3.5.0",
-  "version": "0.0.11",
+  "version": "0.0.12",
   "type": "module",
   "main": "./dist/cjs/index.js",
   "module": "./dist/esm/index.js",
@@ -31,6 +31,7 @@
   "dependencies": {
     "@coral-xyz/anchor": "^0.28.0",
     "@solana/spl-token": "^0.3.7",
-    "@types/node": "^20.8.7"
+    "@types/node": "^20.8.7",
+    "bs58": "^5.0.0"
   }
 }
