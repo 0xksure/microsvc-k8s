@@ -1,7 +1,7 @@
 {
   "name": "idlinker-sdk",
   "packageManager": "yarn@3.5.0",
-  "version": "0.0.15",
+  "version": "0.0.16",
   "type": "module",
   "main": "./dist/cjs/index.js",
   "module": "./dist/esm/index.js",
