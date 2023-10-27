@@ -1,22 +1,21 @@
-import * as anchor from "@coral-xyz/anchor";
-import { Identity, IDL } from "./idl/identity"
-import { bs58 } from "@coral-xyz/anchor/dist/cjs/utils/bytes";
-export * as utils from "./utils"
-export { IdentitySdk }
-
+import { BN, web3, Program, AnchorProvider } from "@coral-xyz/anchor";
+import { Identity, IDL } from "./idl/identity.js"
+import bs58 from "bs58"
+import NodeWallet from "@coral-xyz/anchor/dist/cjs/nodewallet.js";
+export * as utils from "./utils.js"
 const IDENTITY_SEED = "identity"
-const IDENTITY_PROGRAM_ID = new anchor.web3.PublicKey("3rQketG7pSopHE1APQKZu1BQofanqbCBP7spZ4CBGrUm")
+const IDENTITY_PROGRAM_ID = new web3.PublicKey("3Nt1tyTJ6VBf4APaPPWixXFJr6DtfGvvTwHY1aGYT4Ws")
 
 export const getIdentityProgramPDA = () => {
-    return anchor.web3.PublicKey.findProgramAddressSync(
+    return web3.PublicKey.findProgramAddressSync(
         [Buffer.from(IDENTITY_SEED)],
         IDENTITY_PROGRAM_ID
     );
 }
 
-export const getIdentityPDA = (social: string, userId: number) => {
-    return anchor.web3.PublicKey.findProgramAddressSync(
-        [Buffer.from(IDENTITY_SEED), Buffer.from(social), new anchor.BN(userId).toBuffer("le", 4)],
+export const getIdentityPDA = (social: string, userId: BN) => {
+    return web3.PublicKey.findProgramAddressSync(
+        [Buffer.from(IDENTITY_SEED), Buffer.from(social), new BN(userId).toBuffer("le", 8)],
         IDENTITY_PROGRAM_ID
     )
 }
@@ -40,15 +39,15 @@ export const convertStringOfSizeToString = (string: string) => {
 }
 
 
-class IdentitySdk {
+export class IdentitySdk {
 
-    public program: anchor.Program<Identity>;
+    public program: Program<Identity>;
     constructor(
-        readonly signer: anchor.web3.PublicKey,
-        readonly connection?: anchor.web3.Connection,
+        readonly signer: web3.PublicKey,
+        readonly connection?: web3.Connection,
     ) {
         this.program = IdentitySdk.setUpProgram({
-            keypair: anchor.web3.Keypair.generate(),
+            keypair: web3.Keypair.generate(),
             connection: connection
         });
     }
@@ -58,14 +57,14 @@ class IdentitySdk {
         connection
     }:
         {
-            keypair: anchor.web3.Keypair,
-            connection?: anchor.web3.Connection
+            keypair: web3.Keypair,
+            connection?: web3.Connection
         }) {
-        const provider = new anchor.AnchorProvider(connection ?? new anchor.web3.Connection("https://api.solana.com"), new anchor.Wallet(keypair), {
+        const provider = new AnchorProvider(connection ?? new web3.Connection("https://api.solana.com"), new NodeWallet(keypair), {
             preflightCommitment: "recent",
             commitment: "confirmed",
         })
-        return new anchor.Program<Identity>(IDL, IDENTITY_PROGRAM_ID, provider);
+        return new Program<Identity>(IDL, IDENTITY_PROGRAM_ID, provider);
     }
 
     /**
@@ -75,9 +74,9 @@ class IdentitySdk {
      * @returns
      */
     createVersionedTransaction = async (
-        ixs: anchor.web3.TransactionInstruction[], payer: anchor.web3.PublicKey = this.signer
+        ixs: web3.TransactionInstruction[], payer: web3.PublicKey = this.signer
     ) => {
-        const txMessage = await new anchor.web3.TransactionMessage({
+        const txMessage = await new web3.TransactionMessage({
             instructions: ixs,
             recentBlockhash: (
                 await this.program.provider.connection.getLatestBlockhash()
@@ -85,13 +84,54 @@ class IdentitySdk {
             payerKey: payer,
         }).compileToV0Message();
 
-        return new anchor.web3.VersionedTransaction(txMessage);
+        return new web3.VersionedTransaction(txMessage);
     };
+
+
+    /**
+     * getIdentityAccount uses the standard fetch method to get the account data
+     * It also deals with the last mile deserialization and standardization of the data
+     * @param param0 
+     * @returns 
+     */
+    getIdentityAccount = async ({
+        social,
+        userId
+    }: {
+        social: string,
+        userId: BN
+    }) => {
+        const identityPDA = getIdentityPDA(social, userId)
+        const identity = await this.program.account.identity.fetch(identityPDA[0])
+        identity.username = convertStringOfSizeToString(identity.username)
+        identity.social = convertStringOfSizeToString(identity.social)
+        return identity
+    }
+
+    getIdentityAccountFromAddress = async ({
+        address,
+    }: {
+        address: web3.PublicKey
+    }) => {
+        const identity = await this.program.account.identity.fetch(address)
+        identity.username = convertStringOfSizeToString(identity.username)
+        identity.social = convertStringOfSizeToString(identity.social)
+        return identity
+    }
+
+    /**
+     * getIdentityProgramAccount is a simple helper method
+     * @returns 
+     */
+    getIdentityProgramAccount = async () => {
+        const identityProgramPDA = getIdentityProgramPDA()
+        return this.program.account.identityProgram.fetch(identityProgramPDA[0])
+    }
 
     initializeProtocol = async ({
         signer
     }: {
-        signer?: anchor.web3.PublicKey
+        signer?: web3.PublicKey
     } = {
         }) => {
         const identityProgramPDA = getIdentityProgramPDA()
@@ -115,10 +155,10 @@ class IdentitySdk {
         protocolOwner
     }: {
         social: string,
-        userId: number,
+        userId: BN,
         username: string,
-        identityOwner: anchor.web3.PublicKey,
-        protocolOwner?: anchor.web3.PublicKey
+        identityOwner: web3.PublicKey,
+        protocolOwner?: web3.PublicKey
     }) => {
         const identityPDA = getIdentityPDA(social, userId)
         const protocolPDA = getIdentityProgramPDA()
@@ -144,8 +184,8 @@ class IdentitySdk {
     }: {
         username: string,
         social: string,
-        userId: number,
-        identityOwner: anchor.web3.PublicKey
+        userId: BN,
+        identityOwner: web3.PublicKey
     }) => {
         const identityPDA = getIdentityPDA(social, userId)
         const ix = await this.program.methods.updateUsername(username).accounts({
@@ -167,10 +207,10 @@ class IdentitySdk {
         social,
         userId
     }: {
-        identityOwner: anchor.web3.PublicKey,
-        newIdentityOwner: anchor.web3.PublicKey,
+        identityOwner: web3.PublicKey,
+        newIdentityOwner: web3.PublicKey,
         social: string,
-        userId: number
+        userId: BN
     }) => {
         const identityPDA = getIdentityPDA(social, userId)
         const ix = await this.program.methods.transferOwnership().accounts({
@@ -192,9 +232,9 @@ class IdentitySdk {
         social,
         userId
     }: {
-        identityOwner: anchor.web3.PublicKey,
+        identityOwner: web3.PublicKey,
         social: string,
-        userId: number
+        userId: BN
     }) => {
         const identityPDA = getIdentityPDA(social, userId)
         const ix = await this.program.methods.deleteIdentity().accounts({
@@ -215,7 +255,7 @@ class IdentitySdk {
      * @param address 
      * @returns 
      */
-    getIdentityFromAddress = async ({ address }: { address: anchor.web3.PublicKey }) => {
+    getIdentityFromAddress = async ({ address }: { address: web3.PublicKey }) => {
         const memcmpFilters = [
             {
                 memcmp: {
@@ -224,7 +264,12 @@ class IdentitySdk {
                 }
             }
         ]
-        return this.program.account.identity.all(memcmpFilters)
+        const identityAccounts = await this.program.account.identity.all(memcmpFilters)
+        return identityAccounts.map((identity) => {
+            identity.account.username = convertStringOfSizeToString(identity.account.username)
+            identity.account.social = convertStringOfSizeToString(identity.account.social)
+            return identity
+        })
     }
 
     /**
@@ -238,13 +283,18 @@ class IdentitySdk {
         const memcmpFilters = [
             {
                 memcmp: {
-                    offset: 8 + 32 + 4 + 32 + 4 + 4,
+                    offset: 8 + 32 + 4 + 32 + 8 + 4,
                     bytes: bs58.encode(Buffer.from(username))
                 }
             }
         ]
 
-        return this.program.account.identity.all(memcmpFilters)
+        const identityAccount = await this.program.account.identity.all(memcmpFilters)
+        return identityAccount.map((identity) => {
+            identity.account.username = convertStringOfSizeToString(identity.account.username)
+            identity.account.social = convertStringOfSizeToString(identity.account.social)
+            return identity
+        })
     }
 
 }

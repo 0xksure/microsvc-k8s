@@ -78,7 +78,7 @@ export type Identity = {
         },
         {
           "name": "userId",
-          "type": "u32"
+          "type": "u64"
         }
       ]
     },
@@ -203,7 +203,7 @@ export type Identity = {
               "the id of the user on the social media",
               "this is immutable"
             ],
-            "type": "u32"
+            "type": "u64"
           },
           {
             "name": "username",
@@ -219,6 +219,13 @@ export type Identity = {
               "the bump is used to generate the address"
             ],
             "type": "u8"
+          },
+          {
+            "name": "socialRaw",
+            "docs": [
+              "ending bytes used as seed, still assume that it's less than 32 bytes"
+            ],
+            "type": "string"
           }
         ]
       }
@@ -323,7 +330,7 @@ export const IDL: Identity = {
         },
         {
           "name": "userId",
-          "type": "u32"
+          "type": "u64"
         }
       ]
     },
@@ -448,7 +455,7 @@ export const IDL: Identity = {
               "the id of the user on the social media",
               "this is immutable"
             ],
-            "type": "u32"
+            "type": "u64"
           },
           {
             "name": "username",
@@ -464,6 +471,13 @@ export const IDL: Identity = {
               "the bump is used to generate the address"
             ],
             "type": "u8"
+          },
+          {
+            "name": "socialRaw",
+            "docs": [
+              "ending bytes used as seed, still assume that it's less than 32 bytes"
+            ],
+            "type": "string"
           }
         ]
       }

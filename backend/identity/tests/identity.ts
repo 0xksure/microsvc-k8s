@@ -25,6 +25,33 @@ const topUpAccount = async (connection: anchor.web3.Connection, wallet: anchor.W
   });
 }
 
+interface IdentityAccount {
+  // address of the account holder
+  address: anchor.web3.PublicKey, // 32 bytes
+  social: String,  // 4+32 bytes
+
+  /// the id of the user on the social media
+  /// this is immutable
+  userId: anchor.BN, // 8 bytes
+
+  /// the username of the user on the social media
+  /// this is mutable
+  username: String, // 4+32 bytes
+
+  /// the bump is used to generate the address
+  bump: number, // 1 byte
+}
+
+
+const testIdentityAccount = async (identitySdk: identity.IdentitySdk, identityAccountAddress: anchor.web3.PublicKey, expected: IdentityAccount) => {
+  const identityAccount = await identitySdk.getIdentityAccountFromAddress({
+    address: identityAccountAddress
+  })
+  expect(identityAccount.social).to.equal(expected.social)
+  expect(identityAccount.userId.eq(expected.userId)).to.be.true
+  expect(identityAccount.username).to.equal(expected.username)
+}
+
 describe("identity", () => {
   // Configure the client to use the local cluster.
 
@@ -64,7 +91,7 @@ describe("identity", () => {
   it("Create identity -> Should succeed ", async () => {
     const createIdentityParams = {
       social: "github",
-      userId: 444322,
+      userId: new anchor.BN(444322),
       username: "test",
       identityOwner: user.publicKey,
       protocolOwner: wallet.publicKey
@@ -78,8 +105,8 @@ describe("identity", () => {
     )
 
     const identity = await program.account.identity.fetch(createIdentity.identityPDA[0])
-    expect(identity.social.github).to.not.be.undefined
-    expect(identity.userId).to.equal(createIdentityParams.userId)
+    expect(identity.social).to.not.be.undefined
+    expect(identity.userId.eq(createIdentityParams.userId)).to.be.true
   })
 
   it("Try to recreate the protocol -> should fail", async () => {
@@ -95,7 +122,7 @@ describe("identity", () => {
   it("Try to create the same identity twice -> should fail", async () => {
     const createIdentityParams = {
       social: "github",
-      userId: 444323,
+      userId: new anchor.BN(444323),
       username: "test",
       identityOwner: user.publicKey,
       protocolOwner: wallet.publicKey
@@ -118,7 +145,7 @@ describe("identity", () => {
     const notProtocolOwner = new anchor.Wallet(anchor.web3.Keypair.generate());
     const createIdentityParams = {
       social: "github",
-      userId: 444324,
+      userId: new anchor.BN(444324),
       username: "test",
       identityOwner: user.publicKey,
       protocolOwner: notProtocolOwner.publicKey
@@ -136,7 +163,7 @@ describe("identity", () => {
     const notIdentityOwner = new anchor.Wallet(anchor.web3.Keypair.generate());
     const createIdentityParams = {
       social: "github",
-      userId: 444325,
+      userId: new anchor.BN(444325),
       username: "test",
       identityOwner: user.publicKey,
       protocolOwner: user.publicKey
@@ -153,7 +180,7 @@ describe("identity", () => {
   it("Create identity and update username as identity owner-> should succeed", async () => {
     const createIdentityParams = {
       social: "github",
-      userId: 444326,
+      userId: new anchor.BN(444326),
       username: "test",
       identityOwner: user.publicKey,
       protocolOwner: wallet.publicKey
@@ -165,10 +192,13 @@ describe("identity", () => {
       [user.payer, wallet.payer],
 
     )
-    const firstCreatedIdentity = await program.account.identity.fetch(createIdentity.identityPDA[0])
-    expect(firstCreatedIdentity.social.github).to.not.be.undefined
-    expect(firstCreatedIdentity.userId).to.equal(createIdentityParams.userId)
-    expect(firstCreatedIdentity.username.toString()).to.equal(createIdentityParams.username)
+    await testIdentityAccount(identitySdk, createIdentity.identityPDA[0], {
+      address: user.publicKey,
+      social: createIdentityParams.social,
+      userId: createIdentityParams.userId,
+      username: createIdentityParams.username,
+      bump: 0
+    })
 
 
     const newUsername = "test2"
@@ -176,7 +206,7 @@ describe("identity", () => {
       username: newUsername,
       identityOwner: user.publicKey,
       social: "github",
-      userId: 444326
+      userId: new anchor.BN(444326)
     })
     await sendAndConfirmTransaction(
       program.provider.connection,
@@ -185,16 +215,19 @@ describe("identity", () => {
 
     )
 
-    const identity = await program.account.identity.fetch(createIdentity.identityPDA[0])
-    expect(identity.social.github).to.not.be.undefined
-    expect(identity.userId).to.equal(createIdentityParams.userId)
-    expect(identity.username.toString()).to.equal(newUsername)
+    await testIdentityAccount(identitySdk, createIdentity.identityPDA[0], {
+      address: user.publicKey,
+      social: createIdentityParams.social,
+      userId: createIdentityParams.userId,
+      username: newUsername,
+      bump: 0
+    })
   })
 
   it("Create identity and try to change the userId -> should fail", async () => {
     const createIdentityParams = {
       social: "github",
-      userId: 444327,
+      userId: new anchor.BN(444327),
       username: "test",
       identityOwner: user.publicKey,
       protocolOwner: wallet.publicKey
@@ -206,10 +239,13 @@ describe("identity", () => {
       [user.payer, wallet.payer],
 
     )
-    const firstCreatedIdentity = await program.account.identity.fetch(createIdentity.identityPDA[0])
-    expect(firstCreatedIdentity.social.github).to.not.be.undefined
-    expect(firstCreatedIdentity.userId).to.equal(createIdentityParams.userId)
-    expect(firstCreatedIdentity.username.toString()).to.equal(createIdentityParams.username)
+    await testIdentityAccount(identitySdk, createIdentity.identityPDA[0], {
+      address: user.publicKey,
+      social: createIdentityParams.social,
+      userId: createIdentityParams.userId,
+      username: createIdentityParams.username,
+      bump: 0
+    })
 
     // update userName with new userID -> should fail 
     const newUsername = "test2"
@@ -217,7 +253,7 @@ describe("identity", () => {
       username: newUsername,
       identityOwner: user.publicKey,
       social: "github",
-      userId: 444328
+      userId: new anchor.BN(444328)
     })
     await expect(sendAndConfirmTransaction(
       program.provider.connection,
@@ -230,7 +266,7 @@ describe("identity", () => {
   it("Try to transfer ownership of the identity to another address -> should succeed", async () => {
     const createIdentityParams = {
       social: "github",
-      userId: 444329,
+      userId: new anchor.BN(444329),
       username: "test",
       identityOwner: user.publicKey,
       protocolOwner: wallet.publicKey
@@ -243,10 +279,13 @@ describe("identity", () => {
 
     )
     const firstCreatedIdentity = await program.account.identity.fetch(createIdentity.identityPDA[0])
-    expect(firstCreatedIdentity.social.github).to.not.be.undefined
-    expect(firstCreatedIdentity.userId).to.equal(createIdentityParams.userId)
-    expect(firstCreatedIdentity.username.toString()).to.equal(createIdentityParams.username)
-    expect(firstCreatedIdentity.address.toString()).to.equal(user.publicKey.toString())
+    await testIdentityAccount(identitySdk, createIdentity.identityPDA[0], {
+      address: user.publicKey,
+      social: createIdentityParams.social,
+      userId: createIdentityParams.userId,
+      username: createIdentityParams.username,
+      bump: 0
+    })
 
     // transfer ownership of the identity to another address
     const newOwner = new anchor.Wallet(anchor.web3.Keypair.generate());
@@ -254,7 +293,7 @@ describe("identity", () => {
       identityOwner: user.publicKey,
       newIdentityOwner: newOwner.publicKey,
       social: "github",
-      userId: 444329
+      userId: new anchor.BN(444329)
     })
     await sendAndConfirmTransaction(
       program.provider.connection,
@@ -263,17 +302,20 @@ describe("identity", () => {
 
     )
 
-    const identity = await program.account.identity.fetch(createIdentity.identityPDA[0])
-    expect(identity.social.github).to.not.be.undefined
-    expect(identity.userId).to.equal(createIdentityParams.userId)
-    expect(identity.address.toString()).to.equal(newOwner.publicKey.toString())
+    await testIdentityAccount(identitySdk, createIdentity.identityPDA[0], {
+      address: newOwner.publicKey,
+      social: createIdentityParams.social,
+      userId: createIdentityParams.userId,
+      username: createIdentityParams.username,
+      bump: 0
+    })
   })
 
-  it.only("create identity and fetch it using the username ", async () => {
+  it("create identity and fetch it using the username ", async () => {
     const username = "partyOn"
     const createIdentityParams = {
       social: "github",
-      userId: 444330,
+      userId: new anchor.BN(444330),
       username,
       identityOwner: user.publicKey,
       protocolOwner: wallet.publicKey
@@ -285,12 +327,13 @@ describe("identity", () => {
       [user.payer, wallet.payer],
 
     )
-    const firstCreatedIdentity = await program.account.identity.fetch(createIdentity.identityPDA[0])
-    // strip trailing zeros from username array
-    expect(firstCreatedIdentity.social.toString()).to.not.be.undefined
-    expect(firstCreatedIdentity.userId).to.equal(createIdentityParams.userId)
-    expect(identity.convertStringOfSizeToString(firstCreatedIdentity.username)).to.equal(createIdentityParams.username)
-    expect(firstCreatedIdentity.address.toString()).to.equal(user.publicKey.toString())
+    await testIdentityAccount(identitySdk, createIdentity.identityPDA[0], {
+      address: user.publicKey,
+      social: createIdentityParams.social,
+      userId: createIdentityParams.userId,
+      username: createIdentityParams.username,
+      bump: 0
+    })
 
 
 

@@ -144,7 +144,7 @@ k8s_yaml([
 k8s_resource("github-app",resource_deps=['global-configmap','secret-vault','ghapp-psql'],port_forwards=["30005:8080"])
 k8s_resource('microservice2',resource_deps=['microservice1'],port_forwards=["30004:8080"])
 k8s_resource('microservice1',resource_deps=['postgres'],port_forwards=['30002:1122',"30003:8080"])
-k8s_resource('frontend',port_forwards=["33030:3030"])
+k8s_resource('frontend',port_forwards=["33030:3000"])
 k8s_resource('postgres',
 resource_deps=['global-configmap','secret-vault'],
                 port_forwards=['30001:5432'],

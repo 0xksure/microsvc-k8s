@@ -7,16 +7,15 @@ import jwt from 'jsonwebtoken';
 import { Logger } from 'tslog';
 import { Kafka } from 'kafkajs';
 import * as proto from '$lib/index_pb';
-import { Keypair, VersionedTransaction } from '@solana/web3.js';
-import { bs58 } from '@coral-xyz/anchor/dist/cjs/utils/bytes/index.js';
-import * as identity from "idlinker-sdk";
-
+import { Keypair } from '@solana/web3.js';
+import bs58 from "bs58"
+import * as linker from "idlinker-sdk/dist/cjs/index.js";
 
 export interface LinkerResponse {
     username: string,
     userId: number,
     walletAddress: string
-    vtx: VersionedTransaction
+    vtx: Uint8Array
 }
 
 export const POST = (async (event) => {
@@ -59,12 +58,15 @@ export const POST = (async (event) => {
     const wallet = Keypair.fromSecretKey(bs58.decode(secretKey))
 
     // create identity transaction
-    const identitySdk = new identity.IdentitySdk(wallet.publicKey);
+    const rpcUrl = process.env.RPC_URL
+    if (!rpcUrl) throw error(400, 'No rpc url found')
+    const connection = new anchor.web3.Connection(rpcUrl)
+    const identitySdk = new linker.IdentitySdk(wallet.publicKey, connection);
     const createIdentity = await identitySdk.createIdentity({
         social: "github",
         username,
-        userId,
-        identityOwner: identityOwner,
+        userId: new anchor.BN(userId),
+        identityOwner: new anchor.web3.PublicKey(identityOwner),
         protocolOwner: wallet.publicKey,
     });
     const vtx = createIdentity.vtx
@@ -72,40 +74,45 @@ export const POST = (async (event) => {
 
     // post data to kafka 
     const kafkaPwd = process.env.KAFKA_PASSWORD
-    if (!kafkaPwd) throw error(400, 'No kafka password found')
-    const kafka = new Kafka({
-        clientId: 'my-app',
-        brokers: ["kafka-controller-0.kafka-controller-headless.default.svc.cluster.local:9092",
-            "kafka-controller-1.kafka-controller-headless.default.svc.cluster.local:9092",
-            "kafka-controller-2.kafka-controller-headless.default.svc.cluster.local:9092"],
-        ssl: false,
-        sasl: {
-            mechanism: 'scram-sha-256',
-            username: 'user1',
-            password: kafkaPwd,
-        }
-    })
+    if (kafkaPwd) {
+        const kafka = new Kafka({
+            clientId: 'my-app',
+            brokers: ["kafka-controller-0.kafka-controller-headless.default.svc.cluster.local:9092",
+                "kafka-controller-1.kafka-controller-headless.default.svc.cluster.local:9092",
+                "kafka-controller-2.kafka-controller-headless.default.svc.cluster.local:9092"],
+            ssl: false,
+            sasl: {
+                mechanism: 'scram-sha-256',
+                username: 'user1',
+                password: kafkaPwd,
+            }
+        })
 
-    const linkerMessage = new proto.LinkerMessage({
-        Username: username,
-        UserId: userId,
-        WalletAddress: walletAddress
-    })
+        const linkerMessage = new proto.LinkerMessage({
+            Username: username,
+            UserId: userId,
+            WalletAddress: walletAddress,
 
-    const producer = kafka.producer()
-    await producer.connect()
-    await producer.send({
-        topic: 'linker',
-        messages: [
-            { value: Buffer.from(linkerMessage.toBinary()), partition: 0 },
-        ],
-    })
+        })
+
+        const producer = kafka.producer()
+        await producer.connect()
+        await producer.send({
+            topic: 'linker',
+            messages: [
+                { value: Buffer.from(linkerMessage.toBinary()), partition: 0 },
+            ],
+        })
+    }
+
+
+
 
     const linkerResponse: LinkerResponse = {
         username,
         userId,
         walletAddress,
-        vtx
+        vtx: Buffer.from(vtx.serialize()),
     }
     return new Response(JSON.stringify(linkerResponse))
 })

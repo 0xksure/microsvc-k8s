@@ -7,6 +7,7 @@ import (
 	"errors"
 	"io"
 	"net/http"
+	"strings"
 )
 
 type Network string
@@ -18,14 +19,14 @@ const (
 
 // Token is a struct that contains the token name and address
 type Token struct {
-	address    string
-	chainId    int
-	decimals   int
-	name       string
-	symbol     string
-	logoURI    string
-	tags       []string
-	extensions map[string]string
+	Address    string
+	ChainId    int
+	Decimals   int
+	Name       string
+	Symbol     string
+	LogoURI    string
+	Tags       []string
+	Extensions map[string]string
 }
 type TokenCache map[string]Token
 
@@ -63,20 +64,45 @@ func findTokenInJupagents(address string, network Network) (Token, error) {
 	}
 
 	for _, token := range tokens {
-		if token.address == address {
+		if token.Address == address {
 			return token, nil
 		}
 	}
 	return token, errors.New("token not found")
 }
 
-// Tokens is a map of token names to token addresses
-func getTokenFromAddress(address string, network Network) (Token, error) {
+// findTokenSymbolInJupagents finds the token in the jupagents api based on the
+// token symbol
+func findTokenSymbolInJupagents(symbol string, network Network) (Token, error) {
+	var token Token
+	resp, err := http.Get("https://token.jup.ag/strict")
+	if err != nil {
+		return token, err
+	}
+	defer resp.Body.Close()
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return token, err
+	}
+	var tokens []Token
+	if err := json.Unmarshal(body, &tokens); err != nil {
+		return token, err
+	}
+
+	for _, token := range tokens {
+		if strings.ToLower(symbol) == strings.ToLower(token.Symbol) {
+			return token, nil
+		}
+	}
+	return token, errors.New("token not found")
+}
+
+func GetTokenFromSymbol(symbol string, network Network) (Token, error) {
 	tokenCache = make(TokenCache)
 	// setup redis connection
 	if network == Mainnet {
-		token := memoize(findTokenInJupagents)(address, network)
-		if token.address == "" {
+		token := memoize(findTokenSymbolInJupagents)(symbol, network)
+		if token.Address == "" {
 			return token, errors.New("token not found")
 		}
 		return token, nil
@@ -84,14 +110,43 @@ func getTokenFromAddress(address string, network Network) (Token, error) {
 
 	if network == Devnet {
 		return Token{
-			address:    "0x000000",
-			chainId:    0,
-			decimals:   0,
-			name:       "Jupiter",
-			symbol:     "JUP",
-			logoURI:    "https://jup.io/images/jup-logo.png",
-			tags:       []string{"jup", "jupiter", "jupiter token"},
-			extensions: map[string]string{},
+			Address:    "0x000000",
+			ChainId:    0,
+			Decimals:   0,
+			Name:       "Jupiter",
+			Symbol:     "JUP",
+			LogoURI:    "https://jup.io/images/jup-logo.png",
+			Tags:       []string{"jup", "jupiter", "jupiter token"},
+			Extensions: map[string]string{},
+		}, nil
+	}
+
+	return Token{}, errors.New("network not supported")
+
+}
+
+// Tokens is a map of token names to token addresses
+func GetTokenFromAddress(address string, network Network) (Token, error) {
+	tokenCache = make(TokenCache)
+	// setup redis connection
+	if network == Mainnet {
+		token := memoize(findTokenInJupagents)(address, network)
+		if token.Address == "" {
+			return token, errors.New("token not found")
+		}
+		return token, nil
+	}
+
+	if network == Devnet {
+		return Token{
+			Address:    "0x000000",
+			ChainId:    0,
+			Decimals:   0,
+			Name:       "Jupiter",
+			Symbol:     "JUP",
+			LogoURI:    "https://jup.io/images/jup-logo.png",
+			Tags:       []string{"jup", "jupiter", "jupiter token"},
+			Extensions: map[string]string{},
 		}, nil
 	}
 

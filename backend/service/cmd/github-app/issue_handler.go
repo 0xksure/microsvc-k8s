@@ -7,6 +7,7 @@ import (
 	"github.com/err/db"
 	github_bounty "github.com/err/github"
 	"github.com/err/kafka"
+	"github.com/err/tokens"
 	"github.com/google/go-github/v55/github"
 	"github.com/palantir/go-githubapp/githubapp"
 	"github.com/pkg/errors"
@@ -22,6 +23,8 @@ type PRCommentHandler struct {
 	preamble      string
 	bountyOrm     *db.BountyORM
 	kafkaClient   *kafka.BountyKafkaClient
+	rpcUrl        string
+	network       tokens.Network
 }
 
 func (h *PRCommentHandler) Handles() []string {
@@ -47,7 +50,7 @@ func (h *PRCommentHandler) Handle(ctx context.Context, eventType, deliveryId str
 		logger.Error().Err(err).Msg("Failed to create installation client")
 		return errors.Wrap(err, "failed to create installation client")
 	}
-	githubBountyClient := github_bounty.NewBountyGithubClientWithLogger(client, h.preamble, h.bountyOrm, h.kafkaClient, *logger)
+	githubBountyClient := github_bounty.NewBountyGithubClientWithLogger(client, h.preamble, h.bountyOrm, h.kafkaClient, *logger, h.rpcUrl, h.network)
 
 	// when issue is opened
 	if event.GetAction() == "opened" {

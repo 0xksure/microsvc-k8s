@@ -1,7 +1,7 @@
 import { error } from "console"
-import * as identity from "../sdk-ts/src/index"
+import * as identity from "../sdk-ts/dist/cjs/index"
 import * as web3 from "@solana/web3.js"
-import { sendAndConfirmTransaction } from "../sdk-ts/src/utils"
+import { sendAndConfirmTransaction } from "../sdk-ts/dist/cjs/utils"
 import * as bs58 from "bs58";
 
 
@@ -15,6 +15,7 @@ async function main() {
     // setup connection from env rpc url
     const rpcUrl = process.env.RPC_URL
     if (!rpcUrl) throw error(400, 'No rpc url found')
+    console.log("Connecting to rpc url: ", rpcUrl)
     const connection = new web3.Connection(rpcUrl)
     const latestBlockhash = await connection.getLatestBlockhash();
     console.log(`Latest blockhash: ${latestBlockhash.blockhash}`)

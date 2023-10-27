@@ -8,10 +8,13 @@ import (
 	"strings"
 
 	"github.com/err/db"
+	"github.com/err/identity"
 	"github.com/err/kafka"
+	"github.com/err/tokens"
 	"github.com/google/go-github/v55/github"
 	"github.com/palantir/go-githubapp/githubapp"
 	"github.com/pkg/errors"
+	"github.com/reiver/go-cast"
 	"github.com/rs/zerolog"
 )
 
@@ -21,20 +24,24 @@ type BountyGithub struct {
 	bountyOrm   *db.BountyORM
 	kafkaClient *kafka.BountyKafkaClient
 	logger      zerolog.Logger
+	rpcUrl      string
+	network     tokens.Network
 }
 
-func NewBountyGithubClient(client *github.Client, preamble string, bountyOrm *db.BountyORM, kafkaClient *kafka.BountyKafkaClient) *BountyGithub {
+func NewBountyGithubClient(client *github.Client, preamble string, bountyOrm *db.BountyORM, kafkaClient *kafka.BountyKafkaClient, rpcUrl string, network tokens.Network) *BountyGithub {
 	logger := zerolog.New(os.Stdout).With().Timestamp().Logger()
-	return NewBountyGithubClientWithLogger(client, preamble, bountyOrm, kafkaClient, logger)
+	return NewBountyGithubClientWithLogger(client, preamble, bountyOrm, kafkaClient, logger, rpcUrl, network)
 }
 
-func NewBountyGithubClientWithLogger(client *github.Client, preamble string, bountyOrm *db.BountyORM, kafkaClient *kafka.BountyKafkaClient, logger zerolog.Logger) *BountyGithub {
+func NewBountyGithubClientWithLogger(client *github.Client, preamble string, bountyOrm *db.BountyORM, kafkaClient *kafka.BountyKafkaClient, logger zerolog.Logger, rpcUrl string, network tokens.Network) *BountyGithub {
 	return &BountyGithub{
 		client:      client,
 		preamble:    preamble,
 		bountyOrm:   bountyOrm,
 		kafkaClient: kafkaClient,
 		logger:      logger,
+		rpcUrl:      rpcUrl,
+		network:     network,
 	}
 }
 
@@ -149,15 +156,16 @@ func (b *BountyGithub) CommentEvent(ctx context.Context, repoOwner, repoName, ms
 
 // CreateBounty extracts the bounty from the comment and creates a
 // bounty message
-func (h *BountyGithub) GetNewBountyMessage(ctx context.Context, event github.IssueCommentEvent) (string, error) {
+func (b *BountyGithub) GetNewBountyMessage(ctx context.Context, event github.IssueCommentEvent) (string, error) {
 	issueText := event.GetIssue().GetBody()
 	issueId := event.GetIssue().GetID()
 	author := event.GetComment().GetUser().GetLogin()
+	userId := event.GetComment().GetUser().GetID()
 	instId := githubapp.GetInstallationIDFromEvent(&event)
 	// check if bounty is in text
 	// if not, return false
 	// if yes, create bount
-	r := regexp.MustCompile(`\$(\w+:\d+.{1}\d+)\$`)
+	r := regexp.MustCompile(`\$(\w+:\d+)\$`)
 	bounty := r.FindString(issueText)
 	if bounty == "" {
 		return "", errors.New("No bounty found in issueText")
@@ -167,18 +175,31 @@ func (h *BountyGithub) GetNewBountyMessage(ctx context.Context, event github.Iss
 		return "", errors.Errorf("Expected bounty to be two values. Got %v", bounty)
 	}
 	// token is a string literal e.g. USDC
-	token := bountyParts[0]
+	tokenSymbol := bountyParts[0]
+	token, err := tokens.GetTokenFromSymbol(tokenSymbol, b.network)
+	if err != nil {
+		return "", err
+	}
+
 	// assume amount is in decimals e.g. 100.00
 	amount := bountyParts[1]
+	userIdu64, err := cast.Uint64(userId)
+	if err != nil {
+		return "", errors.Wrapf(err, "Failed to cast userId %d to uint64", userId)
+	}
+	creator, err := identity.GetIdentity(b.rpcUrl, "github", userIdu64)
+	if err != nil {
+		return "", err
+	}
 
 	// generate signing link
-	signingLink := CreateSigningLink(issueId, instId, "0xaljkdhjkls", amount, "0xkjfksla", *event.GetIssue().URL, *event.GetOrganization().Name, event.Repo.GetFullName(), "issues")
-	msg := fmt.Sprintf("In order for the bounty for %s %s to be activated %s please open \n \n :coin: [the bounty link](%s) :coin: \n\n and sign the transaction", amount, token, author, signingLink)
+	signingLink := CreateSigningLink(issueId, instId, token.Address, amount, creator.Address.String(), *event.GetIssue().URL, *event.GetOrganization().Name, event.Repo.GetFullName(), "issues")
+	msg := fmt.Sprintf("In order for the bounty for %s %s to be activated %s please open \n \n :coin: [the bounty link](%s) :coin: \n\n and sign the transaction", amount, token.Address, author, signingLink)
 	return msg, nil
 }
 
 // GetCloseBountyMessage uses the github event to create a close message
-func (h *BountyGithub) GetCloseBountyMessage(ctx context.Context, event github.IssueCommentEvent) (string, error) {
+func (b *BountyGithub) GetCloseBountyMessage(ctx context.Context, event github.IssueCommentEvent) (string, error) {
 	msg := fmt.Sprintf("Bounty has been closed by %s ", event.GetComment().GetUser().GetLogin())
 	return msg, nil
 }

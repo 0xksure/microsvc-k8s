@@ -1,7 +1,7 @@
 use anchor_lang::prelude::*;
 use std::mem::size_of;
 
-declare_id!("3rQketG7pSopHE1APQKZu1BQofanqbCBP7spZ4CBGrUm");
+declare_id!("3Nt1tyTJ6VBf4APaPPWixXFJr6DtfGvvTwHY1aGYT4Ws");
 
 const IDENTITY_SEED: &str = "identity";
 
@@ -36,7 +36,7 @@ pub mod identity {
         ctx: Context<CreateIdentity>,
         social: String,
         username: String,
-        user_id: u32,
+        user_id: u64,
     ) -> Result<()> {
         let identity = &mut ctx.accounts.identity;
         let bump = ctx.bumps.get("identity").unwrap();
@@ -87,7 +87,7 @@ pub struct Initialize<'info> {
 }
 
 #[derive(Accounts)]
-#[instruction(social: String, username: String,user_id: u32)]
+#[instruction(social: String, username: String,user_id: u64)]
 pub struct CreateIdentity<'info> {
     /// the web3 address owner
     #[account(mut)]
@@ -113,7 +113,7 @@ pub struct CreateIdentity<'info> {
             social.as_bytes(),
             user_id.to_le_bytes().as_ref()
         ],
-        space= 8 + 32 +4 +32 +4+4+32+1,
+        space= 8 + 32 +4 +32 +8+4+32+1+32,
         bump,
     )]
     identity: Account<'info, Identity>,
@@ -132,7 +132,7 @@ pub struct UpdateUsername<'info> {
         mut,
         seeds = [
             IDENTITY_SEED.as_bytes(),
-            identity.social.as_bytes(),
+            identity.social_raw.as_bytes(),
             identity.user_id.to_le_bytes().as_ref()
         ],
         bump = identity.bump,
@@ -157,7 +157,7 @@ pub struct TransferOwnership<'info> {
         mut,
         seeds = [
             IDENTITY_SEED.as_bytes(),
-            identity.social.as_bytes(),
+            identity.social_raw.as_bytes(),
             identity.user_id.to_le_bytes().as_ref()
         ],
         bump = identity.bump,
@@ -179,7 +179,7 @@ pub struct DeleteIdentity<'info> {
         close = account_holder,
         seeds = [
             IDENTITY_SEED.as_bytes(),
-            identity.social.as_bytes(),
+            identity.social_raw.as_bytes(),
             identity.user_id.to_le_bytes().as_ref()
         ],
         bump = identity.bump,
@@ -209,7 +209,7 @@ pub struct Identity {
 
     /// the id of the user on the social media
     /// this is immutable
-    pub user_id: u32, // 4 bytes
+    pub user_id: u64, // 8 bytes
 
     /// the username of the user on the social media
     /// this is mutable
@@ -217,6 +217,9 @@ pub struct Identity {
 
     /// the bump is used to generate the address
     pub bump: u8, // 1 byte
+
+    /// ending bytes used as seed, still assume that it's less than 32 bytes
+    pub social_raw: String, // max 32 bytes
 }
 
 impl Identity {
@@ -234,9 +237,10 @@ impl Identity {
         address: Pubkey,
         social_raw: String,
         username_raw: String,
-        user_id: u32,
+        user_id: u64,
         bump: &u8,
     ) -> Result<()> {
+        self.social_raw = social_raw.clone();
         let username = self.get_u32string(username_raw);
         let social = self.get_u32string(social_raw);
         self.username = username;
