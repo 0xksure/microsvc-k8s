@@ -29,7 +29,7 @@ require (
 	github.com/docker/go-connections v0.4.0 // indirect
 	github.com/docker/go-units v0.5.0 // indirect
 	github.com/fatih/color v1.13.0 // indirect
-	github.com/gagliardetto/binary v0.7.7 // indirect
+	github.com/gagliardetto/binary v0.7.9 // indirect
 	github.com/gagliardetto/solana-go v1.8.4 // indirect
 	github.com/gagliardetto/treeout v0.1.4 // indirect
 	github.com/go-sql-driver/mysql v1.6.0 // indirect
@@ -95,7 +95,7 @@ require (
 	github.com/shurcooL/graphql v0.0.0-20181231061246-d48a9a75455f // indirect
 	github.com/shurcooL/sanitized_anchor_name v1.0.0 // indirect
 	github.com/sirupsen/logrus v1.9.2 // indirect
-	github.com/streamingfast/logging v0.0.0-20220405224725-2755dab2ce75 // indirect
+	github.com/streamingfast/logging v0.0.0-20230608130331-f22c91403091 // indirect
 	github.com/teris-io/shortid v0.0.0-20201117134242-e59966efd125 // indirect
 	github.com/tidwall/gjson v1.9.3 // indirect
 	github.com/tidwall/match v1.1.1 // indirect

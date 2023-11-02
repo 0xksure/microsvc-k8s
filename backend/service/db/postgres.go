@@ -8,6 +8,14 @@ import (
 	"github.com/jackc/pgx/v5"
 )
 
+type BountyOrm interface {
+	CreateBountyCreator(entityId int, username, entityType string) error
+	CreateBounty(ctx context.Context, bountyInput BountyInput, entityName string) (int, error)
+	GetBountyOnIssueId(ctx context.Context, issueId int) (Bounty, error)
+	UpdateBountyStatus(ctx context.Context, issueId int, status string) error
+	Close()
+}
+
 type BountyORM struct {
 	db *pgx.Conn
 }
@@ -35,8 +43,12 @@ func InitBountyOrm(db *pgx.Conn) BountyORM {
 	return BountyORM{db: db}
 }
 
+func (b BountyORM) Close() {
+	b.db.Close(context.Background())
+}
+
 // createBountyCreatorTx
-func (b *BountyORM) CreateBountyCreator(entityId int, username, entityType string) error {
+func (b BountyORM) CreateBountyCreator(entityId int, username, entityType string) error {
 	_, err := b.db.Exec(context.Background(), `
 		INSERT INTO bounty_creator(entity_id,username,entity_type)
 		SELECT $1,$2,$3
@@ -48,7 +60,7 @@ func (b *BountyORM) CreateBountyCreator(entityId int, username, entityType strin
 	return err
 }
 
-func (b *BountyORM) CreateBounty(ctx context.Context, bountyInput BountyInput, entityName string) (int, error) {
+func (b BountyORM) CreateBounty(ctx context.Context, bountyInput BountyInput, entityName string) (int, error) {
 	tx, err := b.db.BeginTx(ctx, pgx.TxOptions{})
 	if err != nil {
 		return 0, err
@@ -97,7 +109,7 @@ func (b *BountyORM) CreateBounty(ctx context.Context, bountyInput BountyInput, e
 }
 
 // getBopunty returns the bounty id for a given issue id
-func (b *BountyORM) GetBountyOnIssueId(ctx context.Context, issueId int) (Bounty, error) {
+func (b BountyORM) GetBountyOnIssueId(ctx context.Context, issueId int) (Bounty, error) {
 	var row Bounty
 	err := b.db.QueryRow(ctx,
 		`
@@ -131,7 +143,7 @@ func (b *BountyORM) GetBountyOnIssueId(ctx context.Context, issueId int) (Bounty
 	return row, err
 }
 
-func (b *BountyORM) UpdateBountyStatus(ctx context.Context, issueId int, status string) error {
+func (b BountyORM) UpdateBountyStatus(ctx context.Context, issueId int, status string) error {
 	_, err := b.db.Exec(ctx,
 		`
 		UPDATE bounty SET status=$2 WHERE issue_id=$1

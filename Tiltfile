@@ -45,33 +45,33 @@ warn('ℹ️ Open {tiltfile_path} in your favorite editor to get started.'.forma
 #              ]
 #)
 # Build Docker image for service 1
-docker_build('err/backend-service1',
-context="./backend/service",
-dockerfile='service1-dockerfile',
-live_update=[
-    run(
-        'CGO_ENABLED=0 GOOS=linux go build -o ./build ./cmd/service1/main.go',
-        trigger=[
-            './backend/service/cmd/service1/*',
-            './backend/service/shared/*'
-        ]
-    )
-]
-)
+# docker_build('err/backend-service1',
+# context="./backend/service",
+# dockerfile='service1-dockerfile',
+# live_update=[
+#     run(
+#         'CGO_ENABLED=0 GOOS=linux go build -o ./build ./cmd/service1/main.go',
+#         trigger=[
+#             './backend/service/cmd/service1/*',
+#             './backend/service/shared/*'
+#         ]
+#     )
+# ]
+# )
 
-docker_build('err/backend-service2',
-context="./backend/service",
-dockerfile='service2-dockerfile',
-live_update=[
-    # run(
-    #     'CGO_ENABLED=0 GOOS=linux go build -o ./build ./cmd/service2/main.go',
-    #     trigger=[
-    #         './backend/service/cmd/service2/*',
-    #         './backend/service/shared/*'
-    #     ]
-    # ),
-]
-)
+# docker_build('err/backend-service2',
+# context="./backend/service",
+# dockerfile='service2-dockerfile',
+# live_update=[
+#     # run(
+#     #     'CGO_ENABLED=0 GOOS=linux go build -o ./build ./cmd/service2/main.go',
+#     #     trigger=[
+#     #         './backend/service/cmd/service2/*',
+#     #         './backend/service/shared/*'
+#     #     ]
+#     # ),
+# ]
+# )
 
 docker_build('err/github-app',
 context="./backend/service",
@@ -104,9 +104,9 @@ k8s_yaml([
     'k8s/global.configMap.yaml',
     'k8s/postgres.base.yaml',
     'k8s/secret.vault.yaml', 
-    'k8s/service1.postgres.yaml',
-    'k8s/service1.deployment.yaml',
-    'k8s/service2.deployment.yaml',
+    # 'k8s/service1.postgres.yaml',
+    # 'k8s/service1.deployment.yaml',
+    # 'k8s/service2.deployment.yaml',
     'k8s/ghapp.deployment.yaml',
     'k8s/ghapp.postgres.yaml',
     'k8s/frontend.deployment.yaml',
@@ -141,17 +141,17 @@ k8s_yaml([
 # )
 
 
-k8s_resource("github-app",resource_deps=['global-configmap','secret-vault','ghapp-psql'],port_forwards=["30005:8080"])
-k8s_resource('microservice2',resource_deps=['microservice1'],port_forwards=["30004:8080"])
-k8s_resource('microservice1',resource_deps=['postgres'],port_forwards=['30002:1122',"30003:8080"])
+k8s_resource("github-app",resource_deps=['global-config','secret-vault','ghapp-psql'],port_forwards=["30005:8080"])
+# k8s_resource('microservice2',resource_deps=['microservice1'],port_forwards=["30004:8080"])
+# k8s_resource('microservice1',resource_deps=['postgres'],port_forwards=['30002:1122',"30003:8080"])
 k8s_resource('frontend',port_forwards=["33030:3000"])
-k8s_resource('postgres',
-resource_deps=['global-configmap','secret-vault'],
-                port_forwards=['30001:5432'],
-    )
+# k8s_resource('postgres',
+# resource_deps=['global-configmap','secret-vault'],
+#                 port_forwards=['30001:5432'],
+#     )
 
 k8s_resource('ghapp-psql',
-resource_deps=['global-configmap','secret-vault'],
+resource_deps=['global-config','secret-vault'],
                 port_forwards=['30006:5432'],
     )
 local_resource('migrate_service1',

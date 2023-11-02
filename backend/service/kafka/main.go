@@ -10,6 +10,10 @@ import (
 	"github.com/segmentio/kafka-go/sasl/scram"
 )
 
+type KafkaClient interface {
+	GenerateKafkaConsumer(ctx context.Context, topic string, kf chan KafkaMessage)
+}
+
 type BountyKafkaClient struct {
 	Logger *zerolog.Logger
 	Reader *kafka.Reader
@@ -21,34 +25,8 @@ type KafkaMessage struct {
 	Msg   []byte
 }
 
-func (b *BountyKafkaClient) createKafkaConsumer(topic string) {
-	mechanism, err := scram.Mechanism(scram.SHA512, "user1", os.Getenv("KAFKA_PASSWORD"))
-	if err != nil {
-		panic(err)
-	}
-
-	dialer := &kafka.Dialer{
-		Timeout:       10 * time.Second,
-		DualStack:     true,
-		SASLMechanism: mechanism,
-	}
-
-	r := kafka.NewReader(kafka.ReaderConfig{
-		Brokers: []string{"kafka-controller-0.kafka-controller-headless.default.svc.cluster.local:9092",
-			"kafka-controller-1.kafka-controller-headless.default.svc.cluster.local:9092",
-			"kafka-controller-2.kafka-controller-headless.default.svc.cluster.local:9092"},
-		Topic:     topic,
-		MaxBytes:  10e6, // 10MB
-		Logger:    b.Logger,
-		Partition: 0,
-		Dialer:    dialer,
-	})
-	defer r.Close()
-	b.Reader = r
-}
-
 // GenerateKafkaConsumer generates a kafka consumer for the given topic
-func (b *BountyKafkaClient) GenerateKafkaConsumer(ctx context.Context, topic string, kf chan KafkaMessage) {
+func (b BountyKafkaClient) GenerateKafkaConsumer(ctx context.Context, topic string, kf chan KafkaMessage) {
 	mechanism, err := scram.Mechanism(scram.SHA256, "user1", os.Getenv("KAFKA_PASSWORD"))
 	if err != nil {
 		panic(err)

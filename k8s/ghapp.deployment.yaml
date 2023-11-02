@@ -32,6 +32,11 @@ spec:
                 configMapKeyRef:
                   name: global-config
                   key: GITHUB_WEB_URL
+            - name: SIGNING_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: global-config
+                  key: SIGNING_URL
             - name: GITHUB_V3_API_URL
               valueFrom:
                 configMapKeyRef:

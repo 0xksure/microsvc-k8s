@@ -21,8 +21,8 @@ import (
 type PRCommentHandler struct {
 	ClientCreator githubapp.ClientCreator
 	preamble      string
-	bountyOrm     *db.BountyORM
-	kafkaClient   *kafka.BountyKafkaClient
+	bountyOrm     db.BountyOrm
+	kafkaClient   kafka.KafkaClient
 	rpcUrl        string
 	network       tokens.Network
 }

@@ -110,13 +110,13 @@ func GetTokenFromSymbol(symbol string, network Network) (Token, error) {
 
 	if network == Devnet {
 		return Token{
-			Address:    "0x000000",
-			ChainId:    0,
-			Decimals:   0,
-			Name:       "Jupiter",
-			Symbol:     "JUP",
+			Address:    "sANDTRVZvsHjH5Rq3UqA2QSFExJ6DgkGQrvZajauhhN",
+			ChainId:    1,
+			Decimals:   6,
+			Name:       "sand",
+			Symbol:     "SAND",
 			LogoURI:    "https://jup.io/images/jup-logo.png",
-			Tags:       []string{"jup", "jupiter", "jupiter token"},
+			Tags:       []string{"sand", "jupiter", "jupiter token"},
 			Extensions: map[string]string{},
 		}, nil
 	}

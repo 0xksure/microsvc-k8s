@@ -10,3 +10,4 @@ data:
   GITHUB_WEB_URL: "https://api.github.com/"
   GITHUB_V3_API_URL: "https://api.github.com/"
   GITHUB_V4_API_URL: "https://api.github.com/"
+  SIGNING_URL: "http://localhost:33030"
