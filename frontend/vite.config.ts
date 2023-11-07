@@ -8,9 +8,6 @@ import path from 'path';
 
 export default defineConfig({
 	plugins: [sveltekit()],
-	define: {
-		'process.env': process.env
-	},
 	optimizeDeps: {
 		include: ['@project-serum/anchor', '@solana/web3.js'],
 		esbuildOptions: {

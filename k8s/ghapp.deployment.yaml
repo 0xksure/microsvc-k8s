@@ -62,6 +62,11 @@ spec:
                 secretKeyRef:
                   name: secret-vault
                   key: GITHUB_APP_INTEGRATION_ID
+            - name: WALLET_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: secret-vault
+                  key: WALLET_SECRET_KEY
             - name: GITHUB_APP_PRIVATE_KEY
               valueFrom:
                 secretKeyRef:

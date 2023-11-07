@@ -1,4 +1,3 @@
-
 apiVersion: storage.k8s.io/v1
 kind: StorageClass
 metadata:
@@ -6,8 +5,6 @@ metadata:
 provisioner: kubernetes.io/no-provisioner
 reclaimPolicy: Retain
 volumeBindingMode: WaitForFirstConsumer
-
-
 
 ---
 apiVersion: v1
@@ -20,10 +17,9 @@ spec:
   storageClassName: kafka-storage
   resources:
     requests:
-      storage: 1Gi  
+      storage: 1Gi
 
 ---
-
 apiVersion: v1
 kind: PersistentVolume
 metadata:
@@ -34,18 +30,14 @@ spec:
   volumeMode: Filesystem
   accessModes:
     - ReadWriteMany
-  storageClassName:  kafka-storage
+  storageClassName: kafka-storage
   hostPath:
-    path: /tmp/var/lib/kafka
+    path: /var/lib/kafka
   nodeAffinity:
     required:
       nodeSelectorTerms:
-       - matchExpressions:
-          - key: kubernetes.io/hostname
-            operator: In
-            values:
-            - docker-desktop 
-
-
-
-
+        - matchExpressions:
+            - key: kubernetes.io/hostname
+              operator: In
+              values:
+                - minikube

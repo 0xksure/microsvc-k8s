@@ -1,18 +1,18 @@
 <script lang="ts">
-  import { WalletMultiButton } from '@svelte-on-solana/wallet-adapter-ui';
-  import { walletStore } from '@svelte-on-solana/wallet-adapter-core';
-  import { Connection, VersionedTransaction } from '@solana/web3.js';
+  import { WalletMultiButton } from "@svelte-on-solana/wallet-adapter-ui";
+  import { walletStore } from "@svelte-on-solana/wallet-adapter-core";
+  import { Connection, VersionedTransaction } from "@solana/web3.js";
 
   let transaction: string;
 
   const executeTransaction = async (txbs64: string) => {
-    const rpcUrl = process.env.RPC_URL ?? 'https://api.mainnet-beta.solana.com';
-    if (!rpcUrl) throw new Error('RPC_URL is not defined');
-    const connection = new Connection(rpcUrl, 'confirmed');
-    const bufTx = Buffer.from(txbs64, 'base64');
+    const rpcUrl = process.env.RPC_URL ?? "https://api.mainnet-beta.solana.com";
+    if (!rpcUrl) throw new Error("RPC_URL is not defined");
+    const connection = new Connection(rpcUrl, "confirmed");
+    const bufTx = Buffer.from(txbs64, "base64");
     const vtx = VersionedTransaction.deserialize(bufTx);
     const txid = await connection.simulateTransaction(vtx);
-    console.log('txid: ', txid);
+    console.log("txid: ", txid);
   };
 </script>
 
@@ -46,10 +46,9 @@
 </div>
 
 <style>
-
   .wrapper-app {
     height: 100vh;
-    font-family: 'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS',
+    font-family: "Gill Sans", "Gill Sans MT", Calibri, "Trebuchet MS",
       sans-serif;
   }
   .title {
@@ -58,6 +57,4 @@
     font-size: 20px;
     margin-bottom: 40px;
   }
-
-
 </style>

@@ -143,10 +143,11 @@ func (api *API) BountyKafkaHandler(msg *kafka.KafkaMessage) error {
 		return err
 	}
 
-	githubBountyClient := github_bounty.NewBountyGithubClientWithLogger(client, "Sandblizzard", api.bountyOrm, api.kafkaClient, api.logger, api.rpcUrl, api.network)
+	githubBountyClient := github_bounty.NewBountyGithubClientWithLogger(client, "Sandblizzard", api.kafkaClient, api.logger, api.rpcUrl, api.network)
 	bountyHandler := &BountyHandler{
 		bountyMessage:      &bountyMessage,
 		githubBountyClient: githubBountyClient,
+		db:                 api.bountyOrm,
 	}
 	// handle bounty message
 	if err := bountyHandler.Handle(ctx); err != nil {

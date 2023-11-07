@@ -104,9 +104,6 @@ k8s_yaml([
     'k8s/global.configMap.yaml',
     'k8s/postgres.base.yaml',
     'k8s/secret.vault.yaml', 
-    # 'k8s/service1.postgres.yaml',
-    # 'k8s/service1.deployment.yaml',
-    # 'k8s/service2.deployment.yaml',
     'k8s/ghapp.deployment.yaml',
     'k8s/ghapp.postgres.yaml',
     'k8s/frontend.deployment.yaml',
@@ -142,26 +139,17 @@ k8s_yaml([
 
 
 k8s_resource("github-app",resource_deps=['global-config','secret-vault','ghapp-psql'],port_forwards=["30005:8080"])
-# k8s_resource('microservice2',resource_deps=['microservice1'],port_forwards=["30004:8080"])
-# k8s_resource('microservice1',resource_deps=['postgres'],port_forwards=['30002:1122',"30003:8080"])
 k8s_resource('frontend',port_forwards=["33030:3000"])
-# k8s_resource('postgres',
-# resource_deps=['global-configmap','secret-vault'],
-#                 port_forwards=['30001:5432'],
-#     )
-
 k8s_resource('ghapp-psql',
-resource_deps=['global-config','secret-vault'],
+resource_deps=['global-config','secret-vault','pql-peristent','pql-pvc'],
                 port_forwards=['30006:5432'],
     )
-local_resource('migrate_service1',
-               cmd='just migrate_up_s1 pwd',
-            resource_deps=['postgres']
-)
 local_resource('migrate_ghapp',
                cmd='just migrate_up_ghapp pwd',
             resource_deps=['ghapp-psql']
 )
+
+
 # k8s_resource(
 #         "solana-devnet",
 #         port_forwards = [

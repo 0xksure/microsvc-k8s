@@ -60,4 +60,19 @@ func TestMain(t *testing.T) {
 
 	})
 
+	t.Run("Test GetIdentities", func(t *testing.T) {
+
+		rpcUrl := "https://api.devnet.solana.com"
+		social := "github"
+		userId := uint64(47750504)
+		identities, err := GetIdentities(rpcUrl, social, []uint64{userId})
+		if err != nil {
+			t.Errorf("failed to get identity for social %s and userId %d and %v", social, userId, err)
+		}
+		identity := identities[0]
+		if identity == (Identity{}) {
+			t.Errorf("identity is empty")
+		}
+
+	})
 }

@@ -26,6 +26,8 @@ CREATE TABLE bounty (
     repo_owner VARCHAR(255) NOT NULL,
     owner_id INT NOT NULL,
     status VARCHAR(255) NOT NULL,
+    amount INT NOT NULL,
+    token_address VARCHAR(255) NOT NULL,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT bounty_creator

@@ -7,6 +7,7 @@ import (
 	"net/url"
 	"testing"
 
+	"github.com/err/db"
 	github_bounty "github.com/err/github"
 	"github.com/err/protoc/bounty"
 	"github.com/google/go-github/v55/github"
@@ -55,6 +56,14 @@ func (m MBountyGithub) GetCloseBountyMessage(ctx context.Context, event github.I
 	return "", nil
 }
 
+func (m MBountyGithub) CommentOnEvent(ctx context.Context, event github.IssueCommentEvent, msg string) error {
+	return nil
+}
+
+func (m MBountyGithub) GetBountyOnIssueId(ctx context.Context, issueId int) (db.Bounty, error) {
+	return db.Bounty{}, nil
+}
+
 func generateMockGithubClient(testServer *httptest.Server) *github.Client {
 	testClient := testServer.Client()
 	url, err := url.Parse(testServer.URL + "/")
@@ -67,10 +76,9 @@ func generateMockGithubClient(testServer *httptest.Server) *github.Client {
 }
 
 func generateBountyHandlerMock(bountyMessage *bounty.BountyMessage, testServer *httptest.Server) BountyHandler {
-	bountyOrmMock := MBountyOrm{}
 	kafkaClientMock := MKafkaClient{}
 	githubClient := generateMockGithubClient(testServer)
-	bountyGithub := github_bounty.NewBountyGithubClient(githubClient, "", bountyOrmMock, kafkaClientMock, "", "mainnet")
+	bountyGithub := github_bounty.NewBountyGithubClient(githubClient, "", kafkaClientMock, "", "mainnet")
 
 	return BountyHandler{
 		bountyMessage:      bountyMessage,

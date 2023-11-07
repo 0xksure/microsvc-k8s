@@ -2,6 +2,9 @@ apiVersion: storage.k8s.io/v1
 kind: StorageClass
 metadata:
   name: local-storage
+  labels:
+    app: local-storage
+    project: microservice
 provisioner: kubernetes.io/no-provisioner
 reclaimPolicy: Retain
 volumeBindingMode: WaitForFirstConsumer
@@ -10,11 +13,14 @@ volumeBindingMode: WaitForFirstConsumer
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: pql-pvc
+  name: pql-volclaim2
+  labels:
+    app: postgres-pvc
+    project: microservice
 spec:
   accessModes:
     - ReadWriteOnce
-  storageClassName: local-storage
+  storageClassName: "standard"
   resources:
     requests:
       storage: 1Gi
@@ -23,16 +29,19 @@ spec:
 apiVersion: v1
 kind: PersistentVolume
 metadata:
-  name: pql-pv
+  name: pql-pvol2
+  labels:
+    app: postgres-pv
+    project: microservice
 spec:
   capacity:
     storage: 1Gi
   volumeMode: Filesystem
   accessModes:
     - ReadWriteOnce
-  storageClassName: local-storage
+  storageClassName: "standard"
   hostPath:
-    path: /tmp/var/lib/postgresql
+    path: /var
   nodeAffinity:
     required:
       nodeSelectorTerms:
@@ -40,4 +49,4 @@ spec:
             - key: kubernetes.io/hostname
               operator: In
               values:
-                - docker-desktop
+                - minikube

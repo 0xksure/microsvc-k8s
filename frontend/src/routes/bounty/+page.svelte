@@ -101,7 +101,7 @@
                     "Content-Type": "application/json",
                 },
                 body: JSON.stringify({
-                    bountySignStatus: proto.BountySignStatus.FAILED_TO_SIGN,
+                    bountySignStatus: proto.BountySignStatus.SIGNED,
                     bountyId: data.bountyParams.Bountyid,
                     bountyUIAmount: data.bountyParams.BountyUIAmount,
                     tokenAddress: data.bountyParams.TokenAddress,

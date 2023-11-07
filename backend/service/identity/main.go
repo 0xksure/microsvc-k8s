@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/binary"
 	"encoding/json"
+	"fmt"
 	"os"
 
 	bin "github.com/gagliardetto/binary"
@@ -21,6 +22,20 @@ type Identity struct {
 	Username      string
 	Bump          uint8
 	SocialRaw     string
+}
+
+type Identities []Identity
+
+func (i *Identities) GetAddresses() []solana.PublicKey {
+	var addresses []solana.PublicKey
+	for _, identity := range *i {
+		addresses = append(addresses, identity.Address)
+	}
+	return addresses
+}
+
+func (i *Identity) GetAddress() solana.PublicKey {
+	return i.Address
 }
 
 // Identity is a struct that contains the identity of a user
@@ -64,5 +79,34 @@ func GetIdentity(rpcUrl string, social string, userId uint64) (Identity, error) 
 	}
 
 	return identity, nil
+}
 
+// GetIdentities gets the identities of a list of users
+func GetIdentities(rpcUrl string, social string, userIds []uint64) ([]Identity, error) {
+	identities := make(chan Identity, 3)
+	errs := make(chan error, 3)
+	for _, userId := range userIds {
+		go func(userId uint64) {
+			identity, err := GetIdentity(rpcUrl, social, userId)
+			if err != nil {
+				errs <- err
+				return
+			}
+			identities <- identity
+		}(userId)
+	}
+
+	var identitiesSlice []Identity
+	for i := 0; i < len(userIds); i++ {
+		fmt.Println("i: ", i)
+		select {
+		case err := <-errs:
+			return nil, err
+		case val, _ := <-identities:
+			identitiesSlice = append(identitiesSlice, val)
+			return identitiesSlice, nil
+		}
+	}
+
+	return identitiesSlice, nil
 }

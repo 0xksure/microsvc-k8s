@@ -28,10 +28,17 @@ type MBountyOrm struct{}
 
 func (m MBountyOrm) Close() {}
 
+func (m MBountyOrm) CloseIssue(ctx context.Context, issueId int) error {
+	return nil
+}
+func (m MBountyOrm) IsBountyClosed(ctx context.Context, issueId int) (bool, error) {
+	return false, nil
+}
+
 func (m MBountyOrm) CreateBountyCreator(entityId int, username, entityType string) error {
 	return nil
 }
-func (m MBountyOrm) CreateBounty(ctx context.Context, bountyInput db.BountyInput, entityName string) (int, error) {
+func (m MBountyOrm) CreateBounty(ctx context.Context, bountyInput db.BountyInput) (int, error) {
 	return 0, nil
 }
 func (m MBountyOrm) GetBountyOnIssueId(ctx context.Context, issueId int) (db.Bounty, error) {

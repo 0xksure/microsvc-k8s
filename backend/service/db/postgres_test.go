@@ -120,8 +120,9 @@ func TestServerIntegration(t *testing.T) {
 		RepoOwner:   "repoOwner",
 		OwnerId:     4,
 		Status:      "open",
+		EntityName:  "entityName",
 	}
-	issueIdOut, err := bountyOrm.CreateBounty(ctx, bountyInput, "user")
+	issueIdOut, err := bountyOrm.CreateBounty(ctx, bountyInput)
 	if err != nil {
 		t.Errorf("error creating bounty: %s", err)
 	}

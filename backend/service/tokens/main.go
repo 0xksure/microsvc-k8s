@@ -3,11 +3,15 @@
 package tokens
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"io"
 	"net/http"
 	"strings"
+
+	"github.com/gagliardetto/solana-go"
+	"github.com/gagliardetto/solana-go/rpc"
 )
 
 type Network string
@@ -110,7 +114,7 @@ func GetTokenFromSymbol(symbol string, network Network) (Token, error) {
 
 	if network == Devnet {
 		return Token{
-			Address:    "sANDTRVZvsHjH5Rq3UqA2QSFExJ6DgkGQrvZajauhhN",
+			Address:    "sandphoQsRiNd85VgRrdSXdhS56d58Xa9iDKwdnKfWR",
 			ChainId:    1,
 			Decimals:   6,
 			Name:       "sand",
@@ -141,7 +145,7 @@ func GetTokenFromAddress(address string, network Network) (Token, error) {
 		return Token{
 			Address:    "0x000000",
 			ChainId:    0,
-			Decimals:   0,
+			Decimals:   6,
 			Name:       "Jupiter",
 			Symbol:     "JUP",
 			LogoURI:    "https://jup.io/images/jup-logo.png",
@@ -152,4 +156,17 @@ func GetTokenFromAddress(address string, network Network) (Token, error) {
 
 	return Token{}, errors.New("network not supported")
 
+}
+
+func IsValidAccount(ctx context.Context, address, rpcUrl string) bool {
+	cluster := rpc.New(rpcUrl)
+	pk, err := solana.PublicKeyFromBase58(address)
+	if err != nil {
+		return false
+	}
+	if _, err = cluster.GetAccountInfo(ctx, pk); err != nil {
+		return false
+	}
+
+	return true
 }
