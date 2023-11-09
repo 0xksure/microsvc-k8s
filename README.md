@@ -80,5 +80,5 @@ A microservice architecture is chosen because it reduces the logic whitin the se
 - [ ] [ghapp] Handle complete bounty and either
     - let the ghapp work as a relayer 
     - let the creator release the bounty
-
-
+- [ ] Make sure that Amounts are calculated correctly
+- [ ] Send completeTrasnaction from go service fails

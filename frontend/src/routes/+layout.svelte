@@ -1,16 +1,16 @@
 <script lang="ts">
-  import '../app.css'
+  import "../app.css";
 
-  import { onMount } from 'svelte';
-  import { WalletProvider } from '@svelte-on-solana/wallet-adapter-ui';
+  import { onMount } from "svelte";
+  import { WalletProvider } from "@svelte-on-solana/wallet-adapter-ui";
 
-  const localStorageKey = 'walletAdapter';
+  const localStorageKey = "walletAdapter";
 
   let wallets;
 
   onMount(async () => {
     const { PhantomWalletAdapter, SolflareWalletAdapter, TorusWalletAdapter } =
-      await import('@solana/wallet-adapter-wallets');
+      await import("@solana/wallet-adapter-wallets");
 
     const walletsMap = [
       new PhantomWalletAdapter(),
@@ -27,9 +27,8 @@
   <slot />
 </div>
 
-
 <style>
-    :global(.address) {
+  :global(.address) {
     position: absolute;
     right: 30px;
     top: 30px;

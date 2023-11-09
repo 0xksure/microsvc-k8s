@@ -21,6 +21,12 @@ func GetBountyProgramId() solana.PublicKey {
 	return bounty.ProgramID
 }
 
+func GetRelayerPDA(owner solana.PublicKey) (solana.PublicKey, uint8, error) {
+	bountyProgramId := GetBountyProgramId()
+	// Get the relayer PDA:
+	return solana.FindProgramAddress([][]byte{[]byte("BOUNTY_SANDBLIZZARD"), owner[:]}, bountyProgramId)
+}
+
 func GetSignerKeysFromEnv() (solana.PrivateKey, error) {
 	return solana.PrivateKeyFromBase58(os.Getenv("WALLET_SECRET_KEY"))
 }
@@ -125,12 +131,13 @@ func CompleteBountyAsRelayer(rpcUrl string, bountyId uint64, solverPks []solana.
 	if err != nil {
 		return err
 	}
+	fmt.Println("Signer: ", signer.PublicKey().String())
 
 	protocol, _, err := GetProtocolPDA()
 	if err != nil {
 		return err
 	}
-	bountyProgramId := GetBountyProgramId()
+	//bountyProgramId := GetBountyProgramId()
 
 	feeCollector, _, err := GetfeeCollectorPDA(mint)
 	if err != nil {
@@ -152,46 +159,113 @@ func CompleteBountyAsRelayer(rpcUrl string, bountyId uint64, solverPks []solana.
 		return err
 	}
 
+	relayer, _, err := GetRelayerPDA(signer.PublicKey())
+	if err != nil {
+		return err
+	}
+
 	solvers, err := GetAndCheckSolverTokenAccounts(ctx, mint, solverPks, cluster)
 	if err != nil {
 		return err
 	}
 
+	if len(solvers) < 1 {
+		return errors.Errorf("Expected at least one solver")
+	}
+
 	var accountMetaSlice solana.AccountMetaSlice
 	accountMetaSlice.Append(solana.NewAccountMeta(signer.PublicKey(), true, true))
 	accountMetaSlice.Append(solana.NewAccountMeta(protocol, false, false))
-	accountMetaSlice.Append(solana.NewAccountMeta(bountyProgramId, false, false))
 	accountMetaSlice.Append(solana.NewAccountMeta(feeCollector, false, true))
 	accountMetaSlice.Append(solana.NewAccountMeta(bountyDenomination, false, false))
 	accountMetaSlice.Append(solana.NewAccountMeta(bountyPk, false, true))
 	accountMetaSlice.Append(solana.NewAccountMeta(escrow, false, true))
-	for _, solver := range solvers {
-		accountMetaSlice.Append(solana.NewAccountMeta(solver, false, true))
-	}
+	accountMetaSlice.Append(solana.NewAccountMeta(solvers[0], false, true))
+	accountMetaSlice.Append(solana.NewAccountMeta(solvers[0], false, true))
+	accountMetaSlice.Append(solana.NewAccountMeta(solvers[0], false, true))
+	accountMetaSlice.Append(solana.NewAccountMeta(solvers[0], false, true))
 	accountMetaSlice.Append(solana.NewAccountMeta(solana.SystemProgramID, false, false))
 	accountMetaSlice.Append(solana.NewAccountMeta(solana.TokenProgramID, false, false))
+	accountMetaSlice.Append(solana.NewAccountMeta(relayer, false, false))
 
-	builder := bounty.NewAddBountyDenominationInstructionBuilder()
-	err = builder.SetAccounts(accountMetaSlice)
+	// accountSlice := solana.AccountMetaSlice{
+	// 	solana.NewAccountMeta(signer.PublicKey(), true, true),
+	// 	solana.NewAccountMeta(protocol, false, false),
+	// 	solana.NewAccountMeta(feeCollector, false, true),
+	// 	solana.NewAccountMeta(bountyDenomination, false, false),
+	// 	solana.NewAccountMeta(bountyPk, false, true),
+	// 	solana.NewAccountMeta(escrow, false, true),
+	// 	solana.NewAccountMeta(solvers[0], false, true),
+	// 	solana.NewAccountMeta(solvers[0], false, true),
+	// 	solana.NewAccountMeta(solvers[0], false, true),
+	// 	solana.NewAccountMeta(solvers[0], false, true),
+	// 	solana.NewAccountMeta(solana.SystemProgramID, false, false),
+	// 	solana.NewAccountMeta(solana.TokenProgramID, false, false),
+	// 	solana.NewAccountMeta(relayer, false, false),
+	// }
+
+	completeBounty := bounty.NewCompleteBountyAsRelayerInstruction(
+		signer.PublicKey(),
+		protocol,
+		feeCollector,
+		bountyDenomination,
+		bountyPk,
+		escrow,
+		solvers[0],
+		solvers[0],
+		solvers[0],
+		solvers[0],
+		solana.SystemProgramID,
+		solana.TokenProgramID,
+		relayer,
+	)
+
+	ix, err := completeBounty.ValidateAndBuild()
 	if err != nil {
 		return err
 	}
-	ix := builder.Build()
-	txBuilder := solana.NewTransactionBuilder()
-	txBuilder = txBuilder.AddInstruction(ix)
-	tx, err := txBuilder.Build()
+
+	fmt.Printf("Accounts %v", ix.Accounts())
+	data, err := ix.Data()
 	if err != nil {
-		return err
+		return errors.Wrapf(err, "failed to get data")
+	}
+	fmt.Printf("Data: %v", data)
+	fmt.Printf("Data string %s", string(data))
+
+	// manualIx := solana.NewInstruction(
+	// 	GetBountyProgramId(),
+	// 	accountSlice,
+	// 	data,
+	// )
+	recentBlockhash, err := cluster.GetRecentBlockhash(ctx, rpc.CommitmentFinalized)
+	if err != nil {
+		return errors.Wrapf(err, "failed to get recent blockhash")
+	}
+	blockhash := recentBlockhash.Value.Blockhash
+	if blockhash.IsZero() {
+		return errors.Errorf("blockhash is zero")
+	}
+	tx, err := solana.NewTransactionBuilder().AddInstruction(ix).SetFeePayer(signer.PublicKey()).SetRecentBlockHash(blockhash).Build()
+	if err != nil {
+		return errors.Wrapf(err, "failed to create transaction")
 	}
 
+	_, err = tx.Sign(func(key solana.PublicKey) *solana.PrivateKey {
+		return &signer
+	})
+	if err != nil {
+		return errors.Wrapf(err, "failed to sign transaction")
+	}
+	println("Blockhash ", tx.Message.RecentBlockhash.String())
 	sig, err := cluster.SendTransaction(ctx, tx)
 	if err != nil {
-		return err
+		return errors.Wrapf(err, "failed to send transaction")
 	}
 	fmt.Println("Signature: ", sig)
 	out, err := cluster.GetConfirmedTransaction(ctx, sig)
 	if err != nil {
-		return err
+		return errors.Wrapf(err, "failed to get transaction")
 	}
 	fmt.Println("Transaction: ", out)
 	return nil

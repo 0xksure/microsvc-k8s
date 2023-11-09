@@ -6,29 +6,65 @@ import nodePolyfills from 'rollup-plugin-node-polyfills';
 import path from 'path';
 
 
-export default defineConfig({
-	plugins: [sveltekit()],
-	optimizeDeps: {
-		include: ['@project-serum/anchor', '@solana/web3.js'],
-		esbuildOptions: {
-			target: 'esnext',
-			plugins: [NodeGlobalsPolyfillPlugin({ buffer: true })]
+export default defineConfig(({ command, mode, ssrBuild }) => {
+	if (command === 'serve') {
+		return {
+			plugins: [sveltekit()],
+			define: {
+				'process.env': process.env
+			},
+			optimizeDeps: {
+				include: ['@project-serum/anchor', '@solana/web3.js'],
+				esbuildOptions: {
+					target: 'esnext',
+					plugins: [NodeGlobalsPolyfillPlugin({ buffer: true })]
+				}
+			},
+			resolve: {
+				alias: {
+					$utils: path.resolve('src/utils/'),
+					$static: path.resolve('static/'),
+					stream: 'rollup-plugin-node-polyfills/polyfills/stream'
+				}
+			},
+			build: {
+				target: 'esnext',
+				commonjsOptions: {
+					transformMixedEsModules: true
+				},
+				rollupOptions: {
+					plugins: [inject({ Buffer: ['buffer', 'Buffer'] }), nodePolyfills({ crypto: true })]
+				}
+			}
 		}
-	},
-	resolve: {
-		alias: {
-			$utils: path.resolve('src/utils/'),
-			$static: path.resolve('static/'),
-			stream: 'rollup-plugin-node-polyfills/polyfills/stream'
-		}
-	},
-	build: {
-		target: 'esnext',
-		commonjsOptions: {
-			transformMixedEsModules: true
-		},
-		rollupOptions: {
-			plugins: [inject({ Buffer: ['buffer', 'Buffer'] }), nodePolyfills({ crypto: true })]
+	} else {
+		// command === 'build'
+		return {
+			plugins: [sveltekit()],
+			optimizeDeps: {
+				include: ['@project-serum/anchor', '@solana/web3.js'],
+				esbuildOptions: {
+					target: 'esnext',
+					plugins: [NodeGlobalsPolyfillPlugin({ buffer: true })]
+				}
+			},
+			resolve: {
+				alias: {
+					$utils: path.resolve('src/utils/'),
+					$static: path.resolve('static/'),
+					stream: 'rollup-plugin-node-polyfills/polyfills/stream'
+				}
+			},
+			build: {
+				target: 'esnext',
+				commonjsOptions: {
+					transformMixedEsModules: true
+				},
+				rollupOptions: {
+					plugins: [inject({ Buffer: ['buffer', 'Buffer'] }), nodePolyfills({ crypto: true })]
+				}
+			}
 		}
 	}
+
 });

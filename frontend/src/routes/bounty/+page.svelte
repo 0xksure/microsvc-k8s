@@ -13,7 +13,7 @@
     let inputRef = null;
 
     let localState = {
-        err: null,
+        err: "",
     };
 
     let bountyId = data.bountyParams.Bountyid;
@@ -52,7 +52,7 @@
             return;
         }
 
-        const rpcUrl = process.env.RPC_URL ?? "https://api.devnet.solana.com";
+        const rpcUrl = process?.env?.RPC_URL ?? "https://api.devnet.solana.com";
         if (!rpcUrl) throw new Error("RPC_URL is not defined");
         const connection = new Connection(rpcUrl, "confirmed");
         // sign transaction and send
@@ -93,7 +93,7 @@
             const vtx = await $walletStore?.signTransaction(
                 await createBounty.vtx
             );
-            await bounty.utils.sendAndConfirmTransaction(connection, vtx);
+            await bounty.utils.sendAndConfirmTransaction(connection, vtx, []);
             // call backend with info to create bounty
             fetch("/bounty/create", {
                 method: "POST",
@@ -115,9 +115,12 @@
                 })
                 .catch((error) => {
                     console.error("Error:", error);
+                    localState.err = "Error storing bounty. Please try again.";
                 });
         } catch (e) {
-            console.log("erro: ", e);
+            console.log("error: ", e);
+            localState.err =
+                "Error creating bounty. Please try again. cause" + e?.message;
             throw e;
         }
     }
@@ -182,7 +185,7 @@
             Create Bounty
         </button>
     </form>
-    {#if localState.err}
+    {#if localState.err != ""}
         <p class="text-red-500">{localState.err}</p>
     {/if}
 </div>

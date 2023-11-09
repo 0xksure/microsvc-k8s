@@ -42,7 +42,7 @@
     "@types/google-protobuf": "^3.15.9",
     "autoprefixer": "^10.4.15",
     "bn.js": "^5.2.1",
-    "bounty-sdk": "^0.0.8",
+    "bounty-sdk": "^0.0.10",
     "bs58": "^5.0.0",
     "google-protobuf": "^3.21.2",
     "idlinker-sdk": "^0.0.24",

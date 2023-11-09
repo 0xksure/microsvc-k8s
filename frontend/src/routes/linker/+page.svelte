@@ -94,7 +94,7 @@
             console.log("error signing link transaction");
             return;
         }
-        const rpcUrl = process.env.RPC_URL;
+        const rpcUrl = process.env?.RPC_URL ?? "https://api.devnet.solana.com";
         if (!rpcUrl) throw new Error("RPC_URL is not defined");
 
         try {

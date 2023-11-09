@@ -6,7 +6,8 @@
   let transaction: string;
 
   const executeTransaction = async (txbs64: string) => {
-    const rpcUrl = process.env.RPC_URL ?? "https://api.mainnet-beta.solana.com";
+    const rpcUrl =
+      process?.env?.RPC_URL ?? "https://api.mainnet-beta.solana.com";
     if (!rpcUrl) throw new Error("RPC_URL is not defined");
     const connection = new Connection(rpcUrl, "confirmed");
     const bufTx = Buffer.from(txbs64, "base64");
