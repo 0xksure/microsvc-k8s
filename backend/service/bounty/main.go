@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"strconv"
+	"time"
 
 	"github.com/err/generated/bounty"
 	solana "github.com/gagliardetto/solana-go"
@@ -227,11 +228,31 @@ func CompleteBountyAsRelayer(rpcUrl string, bountyId uint64, solverPks []solana.
 		return errors.Wrapf(err, "failed to send transaction for bountyId %d", bountyId)
 	}
 	fmt.Println("Signature: ", sig)
-	out, err := cluster.GetConfirmedTransaction(ctx, sig)
+
+	out, err := retryGetSignatureConfirmation(ctx, sig, cluster)
 	if err != nil {
 		return errors.Wrapf(err, "failed to get transaction")
 	}
 	fmt.Println("Transaction: ", out)
 	return nil
 
+}
+
+func retryGetSignatureConfirmation(ctx context.Context, signature solana.Signature, cluster *rpc.Client) (*rpc.TransactionWithMeta, error) {
+	maxRetries := 3
+	retriesLeft := maxRetries
+	var err error
+	for retriesLeft > 0 {
+		out, err := cluster.GetConfirmedTransactionWithOpts(ctx, signature,
+			&rpc.GetTransactionOpts{
+				Commitment: rpc.CommitmentConfirmed,
+			})
+		if err != nil {
+			return out, nil
+		}
+		retriesLeft--
+		time.Sleep(200 * time.Microsecond)
+	}
+
+	return nil, errors.Wrapf(err, "failed to get transaction after %d retries", maxRetries)
 }

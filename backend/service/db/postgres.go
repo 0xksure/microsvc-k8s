@@ -10,6 +10,7 @@ import (
 	"github.com/err/tokens"
 	"github.com/google/go-github/v55/github"
 	"github.com/jackc/pgx/v5"
+	"github.com/pkg/errors"
 )
 
 type BountyOrm interface {
@@ -205,6 +206,9 @@ func (b BountyORM) UpdateBountyStatus(ctx context.Context, issueId int, status s
 		`
 		UPDATE bounty SET status=$2 WHERE issue_id=$1
 		`, issueId, status)
+	if err != nil {
+		return errors.Wrapf(err, "Failed tp update bounty %d status to %s", issueId, status)
+	}
 	return err
 }
 

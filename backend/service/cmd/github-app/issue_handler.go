@@ -133,7 +133,7 @@ func (h *PRCommentHandler) Handle(ctx context.Context, eventType, deliveryId str
 		}
 
 		// update status to completed
-		if err := h.bountyOrm.UpdateBountyStatus(ctx, int(event.GetIssue().GetID()), "completed"); err != nil {
+		if err := h.bountyOrm.UpdateBountyStatus(ctx, bountyInfo.IssueId, "complete"); err != nil {
 			logger.Error().Err(err).Msg("Failed to update bounty status")
 			return err
 		}
