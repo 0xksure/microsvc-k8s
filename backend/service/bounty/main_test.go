@@ -19,7 +19,7 @@ func TestCompleteBounty(t *testing.T) {
 			solana.MustPublicKeyFromBase58("CNY467c6XURCPjiXiKRLCvxdRf3bpunagYTJpr685gPv"),
 		}
 		mint := solana.MustPublicKeyFromBase58("sandphoQsRiNd85VgRrdSXdhS56d58Xa9iDKwdnKfWR")
-		err := CompleteBountyAsRelayer(rpcUrl, bountyId, solverPks, mint)
+		_, err := CompleteBountyAsRelayer(rpcUrl, bountyId, solverPks, mint)
 		if err != nil {
 			t.Errorf("failed to complete bounty as relayer %v", err)
 		}

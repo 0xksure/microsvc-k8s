@@ -123,54 +123,54 @@ func GetAndCheckSolverTokenAccounts(ctx context.Context, mint solana.PublicKey, 
 }
 
 // CompleteBountyAsRelayer completes the bounty as the relayer
-func CompleteBountyAsRelayer(rpcUrl string, bountyId uint64, solverPks []solana.PublicKey, mint solana.PublicKey) error {
+func CompleteBountyAsRelayer(rpcUrl string, bountyId uint64, solverPks []solana.PublicKey, mint solana.PublicKey) (solana.Signature, error) {
 	cluster := rpc.New(rpcUrl)
 	ctx := context.Background()
-
+	var signature solana.Signature
 	signer, err := GetSignerKeysFromEnv()
 	if err != nil {
-		return err
+		return signature, err
 	}
 	fmt.Println("Signer: ", signer.PublicKey().String())
 
 	protocol, _, err := GetProtocolPDA()
 	if err != nil {
-		return err
+		return signature, err
 	}
 	//bountyProgramId := GetBountyProgramId()
 
 	feeCollector, _, err := GetfeeCollectorPDA(mint)
 	if err != nil {
-		return err
+		return signature, err
 	}
 
 	bountyDenomination, _, err := GetBountyDenominationPDA(mint)
 	if err != nil {
-		return err
+		return signature, err
 	}
 
 	bountyPk, _, err := GetBountyPDA(bountyId)
 	if err != nil {
-		return err
+		return signature, err
 	}
 
 	escrow, _, err := GetEscrowPDA(bountyPk)
 	if err != nil {
-		return err
+		return signature, err
 	}
 
 	relayer, _, err := GetRelayerPDA(signer.PublicKey())
 	if err != nil {
-		return err
+		return signature, err
 	}
 
 	solvers, err := GetAndCheckSolverTokenAccounts(ctx, mint, solverPks, cluster)
 	if err != nil {
-		return err
+		return signature, err
 	}
 
 	if len(solvers) < 1 {
-		return errors.Errorf("Expected at least one solver")
+		return signature, errors.Errorf("Expected at least one solver")
 	}
 	fmt.Printf("Solver ata: %v  \n Solver wallets %v \n ", solvers, solverPks)
 
@@ -192,49 +192,49 @@ func CompleteBountyAsRelayer(rpcUrl string, bountyId uint64, solverPks []solana.
 
 	ix, err := completeBounty.ValidateAndBuild()
 	if err != nil {
-		return err
+		return signature, err
 	}
 
 	fmt.Printf("Accounts %v", ix.Accounts())
 	data, err := ix.Data()
 	if err != nil {
-		return errors.Wrapf(err, "failed to get data")
+		return signature, errors.Wrapf(err, "failed to get data")
 	}
 	fmt.Printf("Data: %v", data)
 	fmt.Printf("Data string %s", string(data))
 
 	recentBlockhash, err := cluster.GetRecentBlockhash(ctx, rpc.CommitmentFinalized)
 	if err != nil {
-		return errors.Wrapf(err, "failed to get recent blockhash")
+		return signature, errors.Wrapf(err, "failed to get recent blockhash")
 	}
 	blockhash := recentBlockhash.Value.Blockhash
 	if blockhash.IsZero() {
-		return errors.Errorf("blockhash is zero")
+		return signature, errors.Errorf("blockhash is zero")
 	}
 	tx, err := solana.NewTransactionBuilder().AddInstruction(ix).SetFeePayer(signer.PublicKey()).SetRecentBlockHash(blockhash).Build()
 	if err != nil {
-		return errors.Wrapf(err, "failed to create transaction")
+		return signature, errors.Wrapf(err, "failed to create transaction")
 	}
 
 	_, err = tx.Sign(func(key solana.PublicKey) *solana.PrivateKey {
 		return &signer
 	})
 	if err != nil {
-		return errors.Wrapf(err, "failed to sign transaction")
+		return signature, errors.Wrapf(err, "failed to sign transaction")
 	}
 	println("Blockhash ", tx.Message.RecentBlockhash.String())
-	sig, err := cluster.SendTransaction(ctx, tx)
+	signature, err = cluster.SendTransaction(ctx, tx)
 	if err != nil {
-		return errors.Wrapf(err, "failed to send transaction for bountyId %d", bountyId)
+		return signature, errors.Wrapf(err, "failed to send transaction for bountyId %d", bountyId)
 	}
-	fmt.Println("Signature: ", sig)
+	fmt.Println("Signature: ", signature)
 
-	out, err := retryGetSignatureConfirmation(ctx, sig, cluster)
+	out, err := retryGetSignatureConfirmation(ctx, signature, cluster)
 	if err != nil {
-		return errors.Wrapf(err, "failed to get transaction")
+		return signature, errors.Wrapf(err, "failed to get transaction")
 	}
 	fmt.Println("Transaction: ", out)
-	return nil
+	return signature, nil
 
 }
 

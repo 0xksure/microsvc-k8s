@@ -20,7 +20,7 @@
     let bountyAmount = data.bountyParams.BountyUIAmount;
     let tokenAddress = data.bountyParams.TokenAddress;
     let creatorAddress = data.bountyParams.CreatorAddress;
-
+    let successful = false;
     let REDIRECT_IN_SECONDS = 5;
     let startedRedirect = 0;
     let redirectIn = REDIRECT_IN_SECONDS;
@@ -113,6 +113,8 @@
                 .then((response) => response.json())
                 .then((data) => {
                     console.log("Success:", data);
+                    successful = true;
+                    redirectWithTimeout();
                 })
                 .catch((error) => {
                     console.error("Error:", error);
@@ -188,5 +190,10 @@
     </form>
     {#if localState.err != ""}
         <p class="text-red-500">{localState.err}</p>
+    {/if}
+    {#if successful}
+        <p class="text-green-500">
+            Bounty created successfully. Redirecting in {redirectIn} seconds...
+        </p>
     {/if}
 </div>

@@ -59,24 +59,41 @@ func (h *PRCommentHandler) Handle(ctx context.Context, eventType, deliveryId str
 	// when issue is opened
 	if event.GetAction() == "opened" {
 		logger.Info().Msg("Issue comment event action is opened")
-		msg, err := githubBountyClient.GetNewBountyMessage(ctx, event)
-		if err != nil {
-			logger.Err(err).Msg("No bounty found")
-			return nil
-		}
-
-		bountyInput, err := db.CreateBountyInputFromEvent(ctx, event, h.network, h.rpcUrl)
-		if err != nil {
-			logger.Error().Err(err).Msg("Failed to create bounty input from event")
-			return err
-		}
-		_, err = h.bountyOrm.CreateBounty(ctx, bountyInput)
+		comment, err := githubBountyClient.CommentOnEvent(ctx, event, "Issue comment event action is opened")
 		if err != nil {
 			logger.Error().Err(err).Msg("Failed to comment on issue")
 			return err
 		}
 
-		err = githubBountyClient.CommentOnEvent(ctx, event, msg)
+		// update comment
+		bountyInput, err := db.CreateBountyInputFromEvent(ctx, event, h.network, h.rpcUrl)
+		if err != nil {
+			logger.Error().Err(err).Msg("Failed to create bounty input from event")
+			_, err := githubBountyClient.UpdateComment(ctx, event, &comment, "Failed to create bounty input from event. Please try again with a new issue.")
+			return err
+		}
+		_, err = h.bountyOrm.CreateBounty(ctx, bountyInput)
+		if err != nil {
+			logger.Error().Err(err).Msg("Failed to comment on issue")
+			_, err := githubBountyClient.UpdateComment(ctx, event, &comment, "Failed to create bounty input from event. Please try again with a new issue.")
+			return err
+		}
+		comment, err = githubBountyClient.UpdateComment(ctx, event, &comment, "Bounty has been stored")
+		if err != nil {
+			logger.Error().Err(err).Msg("Failed to comment on issue")
+			return err
+		}
+
+		msg, err := githubBountyClient.GetNewBountyMessage(ctx, event)
+		if err != nil {
+			logger.Err(err).Msg("No bounty found")
+			return nil
+		}
+		comment, err = githubBountyClient.UpdateComment(ctx, event, &comment, msg)
+		if err != nil {
+			logger.Error().Err(err).Msg("Failed to comment on issue")
+			return err
+		}
 		return nil
 	}
 
@@ -99,12 +116,20 @@ func (h *PRCommentHandler) Handle(ctx context.Context, eventType, deliveryId str
 
 		if isClosed {
 			logger.Info().Msg("Bounty is already closed")
+			_, err = githubBountyClient.CommentOnEvent(ctx, event, "Bounty is already closed and the bounty has been distributed according to the rules.")
 			return nil
 		}
 
+		msg = fmt.Sprintf("Yes! Lets try to close this bounty and reward some open source contributors! \n\n :white_check_mark: %s", event.GetComment().GetBody())
+		comment, err := githubBountyClient.CommentOnEvent(ctx, event, msg)
+		if err != nil {
+			logger.Error().Err(err).Msg("Failed to comment on issue")
+			return err
+		}
 		solverIdentities, err := common.FindIdentitiesFromAtName(event.GetComment().GetBody(), h.rpcUrl, client)
 		if err != nil {
 			logger.Error().Err(err).Msg("Failed to find identities from at name")
+			_, err = githubBountyClient.CommentOnEvent(ctx, event, "That's weird! An error occured when trying to find the identities from the comment. Please try again.")
 			return err
 		}
 
@@ -114,10 +139,17 @@ func (h *PRCommentHandler) Handle(ctx context.Context, eventType, deliveryId str
 			logger.Info().Msg("No identities found")
 			return nil
 		}
-
+		msg = fmt.Sprintf("Great, we found %d identities. \n These are \n %v \n \n > Note: if any of the solvers are missing it means that they haven't linked their github profile and wallet.", len(solverIdentities), solverIdentities.GetAddresses())
+		comment, err = githubBountyClient.UpdateComment(ctx, event, &comment, msg)
+		if err != nil {
+			logger.Error().Err(err).Msg("Failed to comment on issue")
+			return err
+		}
 		bountyInfo, err := h.bountyOrm.GetBountyOnIssueId(ctx, int(event.GetIssue().GetID()))
 		if err != nil {
 			logger.Error().Err(err).Msg("Failed to get bounty on issue id")
+			msg = fmt.Sprintf("Hmm. We were not able to find the issue with ID=%d that you were looking for.", event.GetIssue().GetID())
+			_, err = githubBountyClient.CommentOnEvent(ctx, event, msg)
 			return err
 		}
 
@@ -127,11 +159,19 @@ func (h *PRCommentHandler) Handle(ctx context.Context, eventType, deliveryId str
 			logger.Error().Err(err).Msg("Failed to get bounty mint")
 			return err
 		}
-		if err := bounty_program.CompleteBountyAsRelayer(h.rpcUrl, uint64(bountyInfo.IssueId), solverIdentities.GetAddresses(), bountyMint); err != nil {
+		signature, err := bounty_program.CompleteBountyAsRelayer(h.rpcUrl, uint64(bountyInfo.IssueId), solverIdentities.GetAddresses(), bountyMint)
+		if err != nil {
 			logger.Error().Err(err).Msg("Failed to complete bounty as relayer")
+			msg = fmt.Sprintf("Wut?. We're sorry we are not able to close the on chain bounty at this point for issue with ID=%d", event.GetIssue().GetID())
+			_, err = githubBountyClient.CommentOnEvent(ctx, event, msg)
 			return err
 		}
-
+		msg = fmt.Sprintf("Bounty has been closed on chain. \n\n :white_check_mark: %s", event.GetComment().GetBody())
+		comment, err = githubBountyClient.UpdateComment(ctx, event, &comment, msg)
+		if err != nil {
+			logger.Error().Err(err).Msg("Failed to comment on issue")
+			return err
+		}
 		// update status to completed
 		if err := h.bountyOrm.UpdateBountyStatus(ctx, bountyInfo.IssueId, "complete"); err != nil {
 			logger.Error().Err(err).Msg("Failed to update bounty status")
@@ -139,14 +179,15 @@ func (h *PRCommentHandler) Handle(ctx context.Context, eventType, deliveryId str
 		}
 
 		// Send message to issue
-		msg, err = githubBountyClient.GetCloseBountyMessage(ctx, event, solverIdentities)
+		msg, err = githubBountyClient.GetCloseBountyMessage(ctx, event, solverIdentities, signature)
 		if err != nil {
 			msg = fmt.Sprintf("Failed to close bounty %s", err.Error())
 			githubBountyClient.CommentOnEvent(ctx, event, msg)
 			logger.Err(err).Msg("No bounty found")
 			return nil
 		}
-		if err := githubBountyClient.CommentOnEvent(ctx, event, msg); err != nil {
+		_, err = githubBountyClient.UpdateComment(ctx, event, &comment, msg)
+		if err != nil {
 			logger.Error().Err(err).Msg("Failed to comment on issue")
 			return err
 		}

@@ -17,8 +17,10 @@ import (
 type Network string
 
 const (
-	Mainnet Network = "mainnet"
-	Devnet          = "devnet"
+	Mainnet  Network = "mainnet"
+	Devnet           = "devnet"
+	Localnet         = "localnet"
+	Testnet          = "testnet"
 )
 
 // Token is a struct that contains the token name and address
