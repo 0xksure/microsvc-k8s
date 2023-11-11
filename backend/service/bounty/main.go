@@ -2,9 +2,9 @@ package bounty_program
 
 import (
 	"context"
-	"encoding/binary"
 	"fmt"
 	"os"
+	"strconv"
 
 	"github.com/err/generated/bounty"
 	solana "github.com/gagliardetto/solana-go"
@@ -55,9 +55,8 @@ func GetBountyDenominationPDA(mint solana.PublicKey) (solana.PublicKey, uint8, e
 func GetBountyPDA(bountyId uint64) (solana.PublicKey, uint8, error) {
 	bountyProgramId := GetBountyProgramId()
 
-	bountyIdb := make([]byte, 8)
-	binary.LittleEndian.PutUint64(bountyIdb, bountyId)
-	seeds := [][]byte{[]byte("BOUNTY_SANDBLIZZARD"), bountyIdb}
+	// convert bountyId to string
+	seeds := [][]byte{[]byte("BOUNTY_SANDBLIZZARD"), []byte(strconv.Itoa(int(bountyId)))}
 	// Get the bounty PDA:
 	return solana.FindProgramAddress(seeds, bountyProgramId)
 }
@@ -100,7 +99,7 @@ func CollectErrors(errors []error) error {
 // GetAndCheckSolverTokenAccounts gets the solver token accounts and checks that they exist
 func GetAndCheckSolverTokenAccounts(ctx context.Context, mint solana.PublicKey, solvers []solana.PublicKey, rpcClient *rpc.Client) ([]solana.PublicKey, error) {
 	/// get token accounts for solvers
-	solverAtas := make([]solana.PublicKey, len(solvers))
+	var solverAtas []solana.PublicKey
 	var errs []error
 	for _, solver := range solvers {
 		ata, _, err := solana.FindAssociatedTokenAddress(solver, mint)
@@ -172,37 +171,7 @@ func CompleteBountyAsRelayer(rpcUrl string, bountyId uint64, solverPks []solana.
 	if len(solvers) < 1 {
 		return errors.Errorf("Expected at least one solver")
 	}
-
-	var accountMetaSlice solana.AccountMetaSlice
-	accountMetaSlice.Append(solana.NewAccountMeta(signer.PublicKey(), true, true))
-	accountMetaSlice.Append(solana.NewAccountMeta(protocol, false, false))
-	accountMetaSlice.Append(solana.NewAccountMeta(feeCollector, false, true))
-	accountMetaSlice.Append(solana.NewAccountMeta(bountyDenomination, false, false))
-	accountMetaSlice.Append(solana.NewAccountMeta(bountyPk, false, true))
-	accountMetaSlice.Append(solana.NewAccountMeta(escrow, false, true))
-	accountMetaSlice.Append(solana.NewAccountMeta(solvers[0], false, true))
-	accountMetaSlice.Append(solana.NewAccountMeta(solvers[0], false, true))
-	accountMetaSlice.Append(solana.NewAccountMeta(solvers[0], false, true))
-	accountMetaSlice.Append(solana.NewAccountMeta(solvers[0], false, true))
-	accountMetaSlice.Append(solana.NewAccountMeta(solana.SystemProgramID, false, false))
-	accountMetaSlice.Append(solana.NewAccountMeta(solana.TokenProgramID, false, false))
-	accountMetaSlice.Append(solana.NewAccountMeta(relayer, false, false))
-
-	// accountSlice := solana.AccountMetaSlice{
-	// 	solana.NewAccountMeta(signer.PublicKey(), true, true),
-	// 	solana.NewAccountMeta(protocol, false, false),
-	// 	solana.NewAccountMeta(feeCollector, false, true),
-	// 	solana.NewAccountMeta(bountyDenomination, false, false),
-	// 	solana.NewAccountMeta(bountyPk, false, true),
-	// 	solana.NewAccountMeta(escrow, false, true),
-	// 	solana.NewAccountMeta(solvers[0], false, true),
-	// 	solana.NewAccountMeta(solvers[0], false, true),
-	// 	solana.NewAccountMeta(solvers[0], false, true),
-	// 	solana.NewAccountMeta(solvers[0], false, true),
-	// 	solana.NewAccountMeta(solana.SystemProgramID, false, false),
-	// 	solana.NewAccountMeta(solana.TokenProgramID, false, false),
-	// 	solana.NewAccountMeta(relayer, false, false),
-	// }
+	fmt.Printf("Solver ata: %v  \n Solver wallets %v \n ", solvers, solverPks)
 
 	completeBounty := bounty.NewCompleteBountyAsRelayerInstruction(
 		signer.PublicKey(),
@@ -233,11 +202,6 @@ func CompleteBountyAsRelayer(rpcUrl string, bountyId uint64, solverPks []solana.
 	fmt.Printf("Data: %v", data)
 	fmt.Printf("Data string %s", string(data))
 
-	// manualIx := solana.NewInstruction(
-	// 	GetBountyProgramId(),
-	// 	accountSlice,
-	// 	data,
-	// )
 	recentBlockhash, err := cluster.GetRecentBlockhash(ctx, rpc.CommitmentFinalized)
 	if err != nil {
 		return errors.Wrapf(err, "failed to get recent blockhash")
@@ -260,7 +224,7 @@ func CompleteBountyAsRelayer(rpcUrl string, bountyId uint64, solverPks []solana.
 	println("Blockhash ", tx.Message.RecentBlockhash.String())
 	sig, err := cluster.SendTransaction(ctx, tx)
 	if err != nil {
-		return errors.Wrapf(err, "failed to send transaction")
+		return errors.Wrapf(err, "failed to send transaction for bountyId %d", bountyId)
 	}
 	fmt.Println("Signature: ", sig)
 	out, err := cluster.GetConfirmedTransaction(ctx, sig)

@@ -52,7 +52,8 @@
             return;
         }
 
-        const rpcUrl = process?.env?.RPC_URL ?? "https://api.devnet.solana.com";
+        const rpcUrl =
+            import.meta.env.RPC_URL ?? "https://api.devnet.solana.com";
         if (!rpcUrl) throw new Error("RPC_URL is not defined");
         const connection = new Connection(rpcUrl, "confirmed");
         // sign transaction and send

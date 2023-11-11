@@ -37,7 +37,7 @@
     }
 
     onMount(async () => {
-        const rpcUrl = process.env.RPC_URL;
+        const rpcUrl = import.meta.env.RPC_URL;
         if (!rpcUrl) throw new Error("RPC_URL is not defined");
         const publicKey = $walletStore?.publicKey ?? PublicKey.default;
         connection = new Connection(rpcUrl, "confirmed");
@@ -94,7 +94,8 @@
             console.log("error signing link transaction");
             return;
         }
-        const rpcUrl = process.env?.RPC_URL ?? "https://api.devnet.solana.com";
+        const rpcUrl =
+            import.meta.env.RPC_URL ?? "https://api.devnet.solana.com";
         if (!rpcUrl) throw new Error("RPC_URL is not defined");
 
         try {

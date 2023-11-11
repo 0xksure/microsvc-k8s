@@ -73,7 +73,7 @@ export const POST = (async (event) => {
     vtx.sign([wallet])
 
     // post data to kafka 
-    const kafkaPwd = process.env.KAFKA_PASSWORD
+    const kafkaPwd = import.meta.env.KAFKA_PASSWORD
     if (kafkaPwd) {
         const kafka = new Kafka({
             clientId: 'my-app',

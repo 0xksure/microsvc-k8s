@@ -6,13 +6,11 @@ import nodePolyfills from 'rollup-plugin-node-polyfills';
 import path from 'path';
 
 
+
 export default defineConfig(({ command, mode, ssrBuild }) => {
 	if (command === 'serve') {
 		return {
 			plugins: [sveltekit()],
-			define: {
-				'process.env': process.env
-			},
 			optimizeDeps: {
 				include: ['@project-serum/anchor', '@solana/web3.js'],
 				esbuildOptions: {
@@ -68,3 +66,5 @@ export default defineConfig(({ command, mode, ssrBuild }) => {
 	}
 
 });
+
+
