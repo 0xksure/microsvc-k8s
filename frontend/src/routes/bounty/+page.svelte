@@ -94,7 +94,11 @@
             const vtx = await $walletStore?.signTransaction(
                 await createBounty.vtx
             );
-            await bounty.utils.sendAndConfirmTransaction(connection, vtx, []);
+            const result = await bounty.utils.sendAndConfirmTransaction(
+                connection,
+                vtx,
+                []
+            );
             // call backend with info to create bounty
             fetch("/bounty/create", {
                 method: "POST",
@@ -108,6 +112,7 @@
                     tokenAddress: data.bountyParams.TokenAddress,
                     creatorAddress: data.bountyParams.CreatorAddress,
                     installationId: data.bountyParams.InstallationId,
+                    signature: result.signature,
                 }),
             })
                 .then((response) => response.json())

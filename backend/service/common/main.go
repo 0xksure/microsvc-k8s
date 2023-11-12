@@ -134,3 +134,14 @@ func ParseBountyMessage(text string, network tokens.Network) (ParsedGithubBounty
 }
 
 type SandblizzardError struct{}
+
+func GetExplorerLink(network tokens.Network, signature solana.Signature) string {
+	if network == tokens.Devnet {
+		return fmt.Sprintf("https://explorer.solana.com/tx/%s?cluster=devnet", signature)
+	} else if network == tokens.Testnet {
+		return fmt.Sprintf("https://explorer.solana.com/tx/%s?cluster=testnet", signature)
+	} else if network == tokens.Localnet {
+		return fmt.Sprintf("https://explorer.solana.com/tx/%s?cluster=localnet", signature)
+	}
+	return fmt.Sprintf("https://explorer.solana.com/tx/%s?cluster=mainnet", signature)
+}

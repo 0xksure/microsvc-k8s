@@ -21,6 +21,7 @@ message BountyMessage {
     string organization = 8;
     string team = 9;
     string domainType = 10;
+    string signature = 11;
 }
 
 message LinkerMessage {

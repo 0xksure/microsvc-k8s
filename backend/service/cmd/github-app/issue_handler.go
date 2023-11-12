@@ -55,12 +55,11 @@ func (h *PRCommentHandler) Handle(ctx context.Context, eventType, deliveryId str
 		return errors.Wrap(err, "failed to create installation client")
 	}
 	githubBountyClient := github_bounty.NewBountyGithubClientWithLogger(client, h.preamble, h.kafkaClient, *logger, h.rpcUrl, h.network)
-
+	commenter := NewComenter(fmt.Sprintf("Note: network is %s \n\n", h.network), &event, githubBountyClient)
 	// when issue is opened
 	if event.GetAction() == "opened" {
 		logger.Info().Msg("Issue comment event action is opened")
-		comment, err := githubBountyClient.CommentOnEvent(ctx, event, "Issue comment event action is opened")
-		if err != nil {
+		if err := commenter.IssueOpened(ctx); err != nil {
 			logger.Error().Err(err).Msg("Failed to comment on issue")
 			return err
 		}
@@ -69,18 +68,15 @@ func (h *PRCommentHandler) Handle(ctx context.Context, eventType, deliveryId str
 		bountyInput, err := db.CreateBountyInputFromEvent(ctx, event, h.network, h.rpcUrl)
 		if err != nil {
 			logger.Error().Err(err).Msg("Failed to create bounty input from event")
-			_, err := githubBountyClient.UpdateComment(ctx, event, &comment, "Failed to create bounty input from event. Please try again with a new issue.")
+			commenter.FailedToCreateBounty(ctx, nil)
 			return err
 		}
 		_, err = h.bountyOrm.CreateBounty(ctx, bountyInput)
 		if err != nil {
-			logger.Error().Err(err).Msg("Failed to comment on issue")
-			_, err := githubBountyClient.UpdateComment(ctx, event, &comment, "Failed to create bounty input from event. Please try again with a new issue.")
-			return err
-		}
-		comment, err = githubBountyClient.UpdateComment(ctx, event, &comment, "Bounty has been stored")
-		if err != nil {
-			logger.Error().Err(err).Msg("Failed to comment on issue")
+			if err := commenter.FailedToCreateBounty(ctx, nil); err != nil {
+				logger.Error().Err(err).Msg("Failed to comment on issue")
+				return err
+			}
 			return err
 		}
 
@@ -89,16 +85,12 @@ func (h *PRCommentHandler) Handle(ctx context.Context, eventType, deliveryId str
 			logger.Err(err).Msg("No bounty found")
 			return nil
 		}
-		comment, err = githubBountyClient.UpdateComment(ctx, event, &comment, msg)
-		if err != nil {
+		if err := commenter.BountyStored(ctx, &msg); err != nil {
 			logger.Error().Err(err).Msg("Failed to comment on issue")
 			return err
 		}
 		return nil
-	}
-
-	// when issue is closed
-	if event.GetAction() == "created" {
+	} else if event.GetAction() == "created" {
 		var msg string
 		logger.Info().Msg("Issue comment event action is closed")
 
@@ -116,40 +108,46 @@ func (h *PRCommentHandler) Handle(ctx context.Context, eventType, deliveryId str
 
 		if isClosed {
 			logger.Info().Msg("Bounty is already closed")
-			_, err = githubBountyClient.CommentOnEvent(ctx, event, "Bounty is already closed and the bounty has been distributed according to the rules.")
-			return nil
+			if err := commenter.BountyIsClosed(ctx); err != nil {
+				logger.Error().Err(err).Msg("Failed to comment on issue")
+				return err
+			}
+			return errors.New("bounty is already closed")
 		}
 
 		msg = fmt.Sprintf("Yes! Lets try to close this bounty and reward some open source contributors! \n\n :white_check_mark: %s", event.GetComment().GetBody())
-		comment, err := githubBountyClient.CommentOnEvent(ctx, event, msg)
-		if err != nil {
+		if err := commenter.BountyClosable(ctx); err != nil {
 			logger.Error().Err(err).Msg("Failed to comment on issue")
 			return err
 		}
+
 		solverIdentities, err := common.FindIdentitiesFromAtName(event.GetComment().GetBody(), h.rpcUrl, client)
 		if err != nil {
 			logger.Error().Err(err).Msg("Failed to find identities from at name")
-			_, err = githubBountyClient.CommentOnEvent(ctx, event, "That's weird! An error occured when trying to find the identities from the comment. Please try again.")
+			if err := commenter.CommentWithMessage(ctx, "That's weird! An error occured when trying to find the identities from the comment. Please try again."); err != nil {
+				return err
+			}
 			return err
 		}
 
 		if len(solverIdentities) == 0 {
-			msg = fmt.Sprintf("No identities found in \n %s", event.GetComment().GetBody())
-			githubBountyClient.CommentOnEvent(ctx, event, msg)
+			if err := commenter.CommentWithMessage(ctx, fmt.Sprintf("No identities found in \n %s", event.GetComment().GetBody())); err != nil {
+				return err
+			}
 			logger.Info().Msg("No identities found")
 			return nil
 		}
 		msg = fmt.Sprintf("Great, we found %d identities. \n These are \n %v \n \n > Note: if any of the solvers are missing it means that they haven't linked their github profile and wallet.", len(solverIdentities), solverIdentities.GetAddresses())
-		comment, err = githubBountyClient.UpdateComment(ctx, event, &comment, msg)
-		if err != nil {
-			logger.Error().Err(err).Msg("Failed to comment on issue")
+		if err := commenter.CommentWithMessage(ctx, msg); err != nil {
 			return err
 		}
+
 		bountyInfo, err := h.bountyOrm.GetBountyOnIssueId(ctx, int(event.GetIssue().GetID()))
 		if err != nil {
 			logger.Error().Err(err).Msg("Failed to get bounty on issue id")
-			msg = fmt.Sprintf("Hmm. We were not able to find the issue with ID=%d that you were looking for.", event.GetIssue().GetID())
-			_, err = githubBountyClient.CommentOnEvent(ctx, event, msg)
+			if err := commenter.FailedToFindBounty(ctx); err != nil {
+				return err
+			}
 			return err
 		}
 
@@ -162,13 +160,12 @@ func (h *PRCommentHandler) Handle(ctx context.Context, eventType, deliveryId str
 		signature, err := bounty_program.CompleteBountyAsRelayer(h.rpcUrl, uint64(bountyInfo.IssueId), solverIdentities.GetAddresses(), bountyMint)
 		if err != nil {
 			logger.Error().Err(err).Msg("Failed to complete bounty as relayer")
-			msg = fmt.Sprintf("Wut?. We're sorry we are not able to close the on chain bounty at this point for issue with ID=%d", event.GetIssue().GetID())
-			_, err = githubBountyClient.CommentOnEvent(ctx, event, msg)
+			if err := commenter.FailedToCompleteBountyAsRelayer(ctx); err != nil {
+				return err
+			}
 			return err
 		}
-		msg = fmt.Sprintf("Bounty has been closed on chain. \n\n :white_check_mark: %s", event.GetComment().GetBody())
-		comment, err = githubBountyClient.UpdateComment(ctx, event, &comment, msg)
-		if err != nil {
+		if err := commenter.BountyCompletedOnChain(ctx); err != nil {
 			logger.Error().Err(err).Msg("Failed to comment on issue")
 			return err
 		}
@@ -181,23 +178,17 @@ func (h *PRCommentHandler) Handle(ctx context.Context, eventType, deliveryId str
 		// Send message to issue
 		msg, err = githubBountyClient.GetCloseBountyMessage(ctx, event, solverIdentities, signature)
 		if err != nil {
-			msg = fmt.Sprintf("Failed to close bounty %s", err.Error())
-			githubBountyClient.CommentOnEvent(ctx, event, msg)
+			if err := commenter.CommentWithMessage(ctx, fmt.Sprintf("Failed to close bounty %s", err.Error())); err != nil {
+				return err
+			}
 			logger.Err(err).Msg("No bounty found")
 			return nil
 		}
-		_, err = githubBountyClient.UpdateComment(ctx, event, &comment, msg)
-		if err != nil {
-			logger.Error().Err(err).Msg("Failed to comment on issue")
+		if err := commenter.CommentWithMessage(ctx, msg); err != nil {
 			return err
 		}
 
 		return nil
-	}
-
-	// when issue is commented
-	if event.GetAction() == "created" {
-		logger.Info().Msg("Issue is commented")
 	}
 
 	logger.Info().Msg("No action to be made on issue comment")

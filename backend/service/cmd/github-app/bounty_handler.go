@@ -24,7 +24,7 @@ type BountyHandler struct {
 }
 
 func (b BountyHandler) GenerateSignedMessage() string {
-	return fmt.Sprintf(":white_check_mark: Bounty has been activated by %s \n\n :point_right: When the owner has closes the issue the rewards will be distributed amongst the solvers \n\n :bulb: Remember to tag the users who will receive parts of the reward.", b.bountyMessage.CreatorAddress)
+	return fmt.Sprintf(":white_check_mark: Bounty has been activated by %s \n\n :point_right: When the owner closes the issue the rewards will be distributed amongst the solvers \n\n :bulb: Remember to tag the users who will receive parts of the reward. \n\n Signature: %s", b.bountyMessage.CreatorAddress, b.bountyMessage.Signature)
 }
 
 func (b BountyHandler) GenerateFailedToSignMessage() string {

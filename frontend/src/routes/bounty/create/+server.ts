@@ -15,10 +15,12 @@ export const POST = (async (event) => {
         bountyUIAmount,
         tokenAddress,
         creatorAddress,
-        installationId
+        installationId,
+        signature
     } = requestBody
 
     logger.info(`linker.link.post: body = ${JSON.stringify(requestBody)}`);
+    logger.info("Signature: " + signature)
     // wallet address
 
     // post data to kafka 
@@ -46,7 +48,8 @@ export const POST = (async (event) => {
                 BountyUIAmount: bountyUIAmount,
                 TokenAddress: tokenAddress,
                 CreatorAddress: creatorAddress,
-                InstallationId: installationId
+                InstallationId: installationId,
+                signature: signature
             })
 
 
