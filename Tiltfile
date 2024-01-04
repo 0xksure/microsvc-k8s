@@ -140,6 +140,10 @@ k8s_yaml([
 
 k8s_resource("github-app",resource_deps=['global-config','secret-vault','ghapp-psql'],port_forwards=["30005:8080"])
 k8s_resource('frontend',port_forwards=["33030:3000"])
+k8s_resource(
+  objects=['secret-vault:Secret:default'],
+  new_name='secret_vault',
+)
 k8s_resource('ghapp-psql',
 resource_deps=['global-config','secret-vault','pql-peristent','pql-pvc'],
                 port_forwards=['30006:5432'],

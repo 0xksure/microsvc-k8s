@@ -50,8 +50,8 @@ spec:
             - name: KAFKA_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: secret-vault
-                  key: KAFKA_PASSWORD
+                  name: kafka-user-passwords
+                  key: client-passwords
             - name: RPC_URL
               valueFrom:
                 secretKeyRef:

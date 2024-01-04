@@ -62,6 +62,7 @@ export const POST = (async (event) => {
                 ],
             })
 
+            logger.info("Posted data to kafka: ", kafkaPayload.toJson())
             return new Response(JSON.stringify(kafkaPayload))
         } catch (e) {
             logger.error(e)

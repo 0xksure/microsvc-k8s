@@ -44,7 +44,7 @@ spec:
       volumes:
         - name: pql-data
           persistentVolumeClaim:
-            claimName: pql-volclaim2
+            claimName: pql-volclaim3
 
 ---
 ## Set up clusterIP

@@ -13,7 +13,7 @@ volumeBindingMode: WaitForFirstConsumer
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: pql-volclaim2
+  name: pql-volclaim5
   labels:
     app: postgres-pvc
     project: microservice
@@ -29,7 +29,7 @@ spec:
 apiVersion: v1
 kind: PersistentVolume
 metadata:
-  name: pql-pvol2
+  name: pql-pvol5
   labels:
     app: postgres-pv
     project: microservice

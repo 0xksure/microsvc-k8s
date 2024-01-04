@@ -94,7 +94,7 @@ func (b BountyGithub) CommentEvent(ctx context.Context, repoOwner, repoName, msg
 func (b BountyGithub) GetNewBountyMessage(ctx context.Context, event github.IssueCommentEvent) (string, error) {
 	issueText := event.GetIssue().GetBody()
 	issueId := event.GetIssue().GetID()
-	issueUrl := event.GetIssue().GetURL()
+	issueUrl := event.GetIssue().GetHTMLURL()
 	author := event.GetSender().GetLogin()
 	userId := event.GetSender().GetID()
 	organizationName := event.GetRepo().GetOwner().GetLogin()
